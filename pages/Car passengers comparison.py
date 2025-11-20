@@ -153,7 +153,7 @@ def kepler_config_lines(data_id, palette):
     return {
         "version": "v1",
         "config": {
-            "mapState": {"latitude": 60.26, "longitude": 24.98, "zoom": 8.73},
+            "mapState": {"latitude": 60.26, "longitude": 24.965, "zoom": 8.73},
             "mapStyle": {
                         "id": "carto_dark",
                         "label": "Carto Dark",
