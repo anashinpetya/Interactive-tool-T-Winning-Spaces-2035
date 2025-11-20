@@ -5,7 +5,7 @@ from keplergl import KeplerGl
 from streamlit_keplergl import keplergl_static
 from navigation import load_sidebar
 
-MAPBOX_API_KEY = "pk.eyJ1IjoiYW5hc2hpbnBldHIiLCJhIjoiY21iN3M4YTNzMGRkYjJpc2U0cm5pbmJpdiJ9.Q9Aqo6C5t1Dn0UJPvO-qXA"
+CARTO_DARK = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
 
 # ============================================================
 # --- PAGE SETUP & STYLE ---
@@ -277,7 +277,11 @@ elif st.session_state.mode == "S2_S1":
         "version": "v1",
         "config": {
             "mapState": {"latitude": 60.25, "longitude": 24.91, "zoom": 8.7},
-            "mapStyle": {"styleType": "dark"},
+            "mapStyle": {
+                        "id": "carto_dark",
+                        "label": "Carto Dark",
+                        "url": CARTO_DARK,  # style.json URL
+                    },
             "visState": {"layers": [{
                 "id": f"{data_id}_layer", "type": "geojson",
                 "config": {"dataId": data_id, "columns": {"geojson": "geometry_json"}, "isVisible": True,
