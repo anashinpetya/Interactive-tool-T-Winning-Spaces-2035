@@ -153,7 +153,7 @@ def kepler_config_lines(data_id, palette):
     return {
         "version": "v1",
         "config": {
-            "mapState": {"latitude": 60.26, "longitude": 25.05, "zoom": 8.73},
+            "mapState": {"latitude": 60.26, "longitude": 25.04, "zoom": 8.73},
             "mapStyle": {
                         "id": "carto_dark",
                         "label": "Carto Dark",
@@ -257,7 +257,7 @@ if st.session_state.mode == "S3_S2":
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Absolute Change**")
-        map_abs = KeplerGl(height=450, data={"absolute_change": df_abs}, config=cfg_abs)
+        map_abs = KeplerGl(height=300, data={"absolute_change": df_abs}, config=cfg_abs)
         keplergl_static(map_abs)
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
@@ -265,7 +265,7 @@ if st.session_state.mode == "S3_S2":
         )
     with col2:
         st.markdown("**Percentage Change**")
-        map_perc = KeplerGl(height=450, data={"percentage_change": df_perc}, config=cfg_perc)
+        map_perc = KeplerGl(height=300, data={"percentage_change": df_perc}, config=cfg_perc)
         keplergl_static(map_perc)
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
