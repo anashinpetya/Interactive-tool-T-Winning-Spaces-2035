@@ -5,7 +5,7 @@ from keplergl import KeplerGl
 from streamlit_keplergl import keplergl_static
 from navigation import load_sidebar
 
-MAPBOX_API_KEY = st.secrets["MAPBOX_API_KEY"]
+MAPBOX_API_KEY = "pk.eyJ1IjoiYW5hc2hpbnBldHIiLCJhIjoiY21iN3M4YTNzMGRkYjJpc2U0cm5pbmJpdiJ9.Q9Aqo6C5t1Dn0UJPvO-qXA"
 
 # ============================================================
 # --- PAGE SETUP & STYLE ---
@@ -196,7 +196,8 @@ if st.session_state.mode == "S3_S2":
         "version": "v1",
         "config": {
             "mapState": {"latitude": 60.25, "longitude": 24.91, "zoom": 8.7},
-            "mapStyle": {"styleType": "dark"},
+            "mapStyle": {"styleType": "dark",
+    "mapboxApiAccessToken": MAPBOX_API_KEY},
             "visState": {"layers": [{
                 "id": f"{data_id}_layer", "type": "geojson",
                 "config": {"dataId": data_id, "columns": {"geojson": "geometry_json"}, "isVisible": True,
