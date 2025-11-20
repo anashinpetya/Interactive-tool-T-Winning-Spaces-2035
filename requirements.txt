@@ -4,7 +4,6 @@ numpy
 geopandas
 shapely
 matplotlib
-json
 keplergl
 streamlit_keplergl
 altair
