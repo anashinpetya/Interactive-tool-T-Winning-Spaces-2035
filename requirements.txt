@@ -3,7 +3,9 @@ pandas
 numpy
 geopandas
 shapely
+pyproj
+fiona
+rtree
 matplotlib
-keplergl
-streamlit_keplergl
-altair
+keplergl==0.3.7
+streamlit-keplergl
