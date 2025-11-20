@@ -7,6 +7,8 @@ from keplergl import KeplerGl
 from streamlit_keplergl import keplergl_static
 from navigation import load_sidebar
 
+MAPBOX_API_KEY = st.secrets["MAPBOX_API_KEY"]
+
 # ============================================================
 # --- PAGE SETUP & STYLE ---
 # ============================================================
