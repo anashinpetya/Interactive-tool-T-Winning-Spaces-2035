@@ -185,52 +185,52 @@ if st.session_state.mode == "S3_S2":
     df_perc["Colour code"] = gdf["color_perc_hex"]
 
     kepler_config = lambda data_id: {
-    "version": "v1",
-    "config": {
-        "mapState": {
-            "latitude": 60.25,
-            "longitude": 25.05,
-            "zoom": 8.75,
-            "bearing": 0,
-            "pitch": 0,
-        },
-        "mapStyle": {
-            # Use custom style instead of the built-in "dark"
-            "styleType": "carto_dark",
-            "mapStyles": [
-                {
-                    "id": "carto_dark",
-                    "label": "Carto Dark",
-                    "url": CARTO_DARK,  # style.json URL
-                }
-            ],
-        },
-        "visState": {
-            "layers": [{
-                "id": f"{data_id}_layer",
-                "type": "geojson",
-                "config": {
-                    "dataId": data_id,
-                    "columns": {"geojson": "geometry_json"},
-                    "isVisible": True,
-                    "visConfig": {
-                        "opacity": opacity_val,
-                        "filled": True,
-                        "colorRange": {"colors": COLOR_PALETTE},
+        "version": "v1",
+        "config": {
+            "mapState": {
+                "latitude": 60.259889999999984,
+                "longitude": 25.2,
+                "zoom": 8.6,
+                "bearing": 0,
+                "pitch": 0,
+            },
+            "mapStyle": {
+                # Use custom style instead of the built-in "dark"
+                "styleType": "carto_dark",
+                "mapStyles": [
+                    {
+                        "id": "carto_dark",
+                        "label": "Carto Dark",
+                        "url": CARTO_DARK,  # style.json URL
+                    }
+                ],
+            },
+            "visState": {
+                "layers": [{
+                    "id": f"{data_id}_layer",
+                    "type": "geojson",
+                    "config": {
+                        "dataId": data_id,
+                        "columns": {"geojson": "geometry_json"},
+                        "isVisible": True,
+                        "visConfig": {
+                            "opacity": opacity_val,
+                            "filled": True,
+                            "colorRange": {"colors": COLOR_PALETTE},
+                        },
                     },
-                },
-                "visualChannels": {
-                    "colorField": {"name": "Colour code", "type": "string"},
-                    "colorScale": "ordinal",
-                },
-            }],
+                    "visualChannels": {
+                        "colorField": {"name": "Colour code", "type": "string"},
+                        "colorScale": "ordinal",
+                    },
+                }],
+            },
+            "options": {
+                "centerMap": False,   # <- don't auto-fit to data bounds
+                "readOnly": False,    # or True if you don't want the user to pan/zoom
+            },
         },
-        "options": {
-            "centerMap": False,   # <- don't auto-fit to data bounds
-            "readOnly": False,    # or True if you don't want the user to pan/zoom
-        },
-    },
-}
+    }
 
     col1, col2 = st.columns(2)
     with col1:
@@ -295,52 +295,52 @@ elif st.session_state.mode == "S2_S1":
     df_perc["Colour code"] = gdf["color_perc_hex"]
 
     kepler_config = lambda data_id: {
-    "version": "v1",
-    "config": {
-        "mapState": {
-            "latitude": 60.25,
-            "longitude": 25.05,
-            "zoom": 8.75,
-            "bearing": 0,
-            "pitch": 0,
-        },
-        "mapStyle": {
-            # Use custom style instead of the built-in "dark"
-            "styleType": "carto_dark",
-            "mapStyles": [
-                {
-                    "id": "carto_dark",
-                    "label": "Carto Dark",
-                    "url": CARTO_DARK,  # style.json URL
-                }
-            ],
-        },
-        "visState": {
-            "layers": [{
-                "id": f"{data_id}_layer",
-                "type": "geojson",
-                "config": {
-                    "dataId": data_id,
-                    "columns": {"geojson": "geometry_json"},
-                    "isVisible": True,
-                    "visConfig": {
-                        "opacity": opacity_val,
-                        "filled": True,
-                        "colorRange": {"colors": COLOR_PALETTE},
+        "version": "v1",
+        "config": {
+            "mapState": {
+                "latitude": 60.259889999999984,
+                "longitude": 25.2,
+                "zoom": 8.6,
+                "bearing": 0,
+                "pitch": 0,
+            },
+            "mapStyle": {
+                # Use custom style instead of the built-in "dark"
+                "styleType": "carto_dark",
+                "mapStyles": [
+                    {
+                        "id": "carto_dark",
+                        "label": "Carto Dark",
+                        "url": CARTO_DARK,  # style.json URL
+                    }
+                ],
+            },
+            "visState": {
+                "layers": [{
+                    "id": f"{data_id}_layer",
+                    "type": "geojson",
+                    "config": {
+                        "dataId": data_id,
+                        "columns": {"geojson": "geometry_json"},
+                        "isVisible": True,
+                        "visConfig": {
+                            "opacity": opacity_val,
+                            "filled": True,
+                            "colorRange": {"colors": COLOR_PALETTE},
+                        },
                     },
-                },
-                "visualChannels": {
-                    "colorField": {"name": "Colour code", "type": "string"},
-                    "colorScale": "ordinal",
-                },
-            }],
+                    "visualChannels": {
+                        "colorField": {"name": "Colour code", "type": "string"},
+                        "colorScale": "ordinal",
+                    },
+                }],
+            },
+            "options": {
+                "centerMap": False,   # <- don't auto-fit to data bounds
+                "readOnly": False,    # or True if you don't want the user to pan/zoom
+            },
         },
-        "options": {
-            "centerMap": False,   # <- don't auto-fit to data bounds
-            "readOnly": False,    # or True if you don't want the user to pan/zoom
-        },
-    },
-}
+    }
 
     col1, col2 = st.columns(2)
     with col1:
