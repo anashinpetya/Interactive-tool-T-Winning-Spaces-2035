@@ -1,20 +1,13 @@
-import os
-import json
-
 import streamlit as st
 import geopandas as gpd
 import pandas as pd
 import numpy as np
-
+import json
 from keplergl import KeplerGl
-# from streamlit_keplergl import keplergl_static  # no longer used
+from streamlit_keplergl import keplergl_static
 from navigation import load_sidebar
-import streamlit.components.v1 as components
 
 CARTO_DARK = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
-
-# Unified map height (change this if needed)
-MAP_HEIGHT = 500
 
 # ============================================================
 # --- PAGE SETUP & STYLE ---
@@ -36,7 +29,6 @@ div[data-testid="stSidebarNav"] ul {
     margin: 0 !important;
     padding: 0 !important;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -118,14 +110,22 @@ def get_color(value, thresholds, palette, reverse=False, default="#888888"):
         return default
     if reverse:
         palette = list(reversed(palette))
-    if value <= thresholds[0]: return palette[0]
-    elif value <= thresholds[1]: return palette[1]
-    elif value <= thresholds[2]: return palette[2]
-    elif value <= thresholds[3]: return palette[3]
-    elif value <= thresholds[4]: return palette[4]
-    elif value <= thresholds[5]: return palette[5]
-    elif value <= thresholds[6]: return palette[6]
-    else: return palette[-1]
+    if value <= thresholds[0]:
+        return palette[0]
+    elif value <= thresholds[1]:
+        return palette[1]
+    elif value <= thresholds[2]:
+        return palette[2]
+    elif value <= thresholds[3]:
+        return palette[3]
+    elif value <= thresholds[4]:
+        return palette[4]
+    elif value <= thresholds[5]:
+        return palette[5]
+    elif value <= thresholds[6]:
+        return palette[6]
+    else:
+        return palette[-1]
 
 
 def load_dataset(path):
@@ -136,47 +136,14 @@ def load_dataset(path):
     return gdf
 
 
-# Helper to render Kepler map via saved HTML + resize hack
-def render_kepler_map(map_obj, height=MAP_HEIGHT, key="kepler"):
-    # 1) Save Kepler map to a temporary HTML file
-    tmp_file = f"kepler_{key}.html"
-    map_obj.save_to_html(file_name=tmp_file, read_only=True)
-
-    # 2) Read HTML back in
-    with open(tmp_file, "r", encoding="utf-8") as f:
-        html = f.read()
-
-    # 3) Optionally remove temp file
-    try:
-        os.remove(tmp_file)
-    except OSError:
-        pass
-
-    # 4) Inject a small resize hack so the canvas fills the iframe
-    html = html.replace(
-        "</body>",
-        """
-        <script>
-        setTimeout(function() {
-            window.dispatchEvent(new Event('resize'));
-        }, 500);
-        </script>
-        </body>
-        """
-    )
-
-    # 5) Render inside Streamlit iframe
-    components.html(html, height=height, scrolling=False)
-
-
 # Color palette (7 steps)
 COLOR_PALETTE = ["#3B0A45", "#78001E", "#B52F0D", "#D65E00", "#E98000", "#F3A300", "#FFD400"]
 
 # ============================================================
 # --- MANUAL THRESHOLDS (EDIT THESE VALUES) ---
-#   * thresholds must be sorted from lowest to highest
-#   * percentage thresholds are in FRACTIONS, not percent
-#     (e.g. -0.5 = -50%, 0.3 = +30%)
+# * thresholds must be sorted from lowest to highest
+# * percentage thresholds are in FRACTIONS, not percent
+#   (e.g. -0.5 = -50%, 0.3 = +30%)
 # ============================================================
 
 # S3 vs S2 (mostly negative, lowest = brightest)
@@ -189,8 +156,8 @@ PERC_THRESHOLDS_S2S1 = [0.2, 0.7, 1.4, 2.0, 3.0, 5.0, 7.0]
 
 # ============================================================
 # --- KEPLER CONFIG FOR LINESTRINGS ---
-#   * Treat lines like "polygons" color-wise by using stroke colors
-#   * thickness fixed at 0.5 as you requested
+# * Treat lines like "polygons" color-wise by using stroke colors
+# * thickness fixed at 0.5 as you requested
 # ============================================================
 def kepler_config_lines(data_id, palette):
     return {
@@ -312,8 +279,8 @@ if st.session_state.mode == "S3_S2":
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Absolute Change**")
-        map_abs = KeplerGl(height=MAP_HEIGHT, data={"absolute_change": df_abs}, config=cfg_abs)
-        render_kepler_map(map_abs, height=MAP_HEIGHT, key="abs_s3s2")
+        map_abs = KeplerGl(height=400, data={"absolute_change": df_abs}, config=cfg_abs)
+        keplergl_static(map_abs)
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
             COLOR_PALETTE[::-1],
@@ -322,8 +289,8 @@ if st.session_state.mode == "S3_S2":
 
     with col2:
         st.markdown("**Percentage Change**")
-        map_perc = KeplerGl(height=MAP_HEIGHT, data={"percentage_change": df_perc}, config=cfg_perc)
-        render_kepler_map(map_perc, height=MAP_HEIGHT, key="perc_s3s2")
+        map_perc = KeplerGl(height=400, data={"percentage_change": df_perc}, config=cfg_perc)
+        keplergl_static(map_perc)
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
             COLOR_PALETTE[::-1],
@@ -408,8 +375,8 @@ elif st.session_state.mode == "S2_S1":
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Absolute Change**")
-        map_abs = KeplerGl(height=MAP_HEIGHT, data={"absolute_change": df_abs}, config=cfg_abs)
-        render_kepler_map(map_abs, height=MAP_HEIGHT, key="abs_s2s1")
+        map_abs = KeplerGl(height=400, data={"absolute_change": df_abs}, config=cfg_abs)
+        keplergl_static(map_abs)
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
             COLOR_PALETTE,
@@ -418,8 +385,8 @@ elif st.session_state.mode == "S2_S1":
 
     with col2:
         st.markdown("**Percentage Change**")
-        map_perc = KeplerGl(height=MAP_HEIGHT, data={"percentage_change": df_perc}, config=cfg_perc)
-        render_kepler_map(map_perc, height=MAP_HEIGHT, key="perc_s2s1")
+        map_perc = KeplerGl(height=400, data={"percentage_change": df_perc}, config=cfg_perc)
+        keplergl_static(map_perc)
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
             COLOR_PALETTE,
