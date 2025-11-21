@@ -234,7 +234,7 @@ if st.session_state.mode == "S3_S2":
             }],
         },
         "options": {
-            "centerMap": False,   # <- don't auto-fit to data bounds
+            "centerMap": True,   # <- don't auto-fit to data bounds
             "readOnly": False,    # or True if you don't want the user to pan/zoom
         },
     },
