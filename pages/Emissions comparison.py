@@ -221,7 +221,7 @@ if st.session_state.mode == "S3_S2":
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Absolute Change**")
-        map_abs = KeplerGl(height=500, data={"absolute_change": df_abs}, config=kepler_config("absolute_change"))
+        map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=kepler_config("absolute_change"))
         keplergl_static(map_abs)
         make_color_legend(
             "Legend: Absolute change in the amount of CO2 emissions, kg",
@@ -229,7 +229,7 @@ if st.session_state.mode == "S3_S2":
         )
     with col2:
         st.markdown("**Percentage Change**")
-        map_perc = KeplerGl(height=500, data={"percentage_change": df_perc}, config=kepler_config("percentage_change"))
+        map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=kepler_config("percentage_change"))
         keplergl_static(map_perc)
         make_color_legend(
             "Legend: Percentage change in the amount of CO2 emissions (%)",
@@ -305,7 +305,7 @@ elif st.session_state.mode == "S2_S1":
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Absolute Change**")
-        map_abs = KeplerGl(height=500, data={"absolute_change": df_abs}, config=kepler_config("absolute_change"))
+        map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=kepler_config("absolute_change"))
         keplergl_static(map_abs)
         make_color_legend(
             "Legend: Absolute change in the amount of CO2 emissions, kg",
@@ -313,7 +313,7 @@ elif st.session_state.mode == "S2_S1":
         )
     with col2:
         st.markdown("**Percentage Change**")
-        map_perc = KeplerGl(height=500, data={"percentage_change": df_perc}, config=kepler_config("percentage_change"))
+        map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=kepler_config("percentage_change"))
         keplergl_static(map_perc)
         make_color_legend(
             "Legend: Percentage change in the amount of CO2 emissions (%)",
