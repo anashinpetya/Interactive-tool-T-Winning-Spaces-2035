@@ -91,7 +91,7 @@ def make_color_legend(title, colors, labels, reverse=False):
         colors = list(reversed(colors))
         labels = list(reversed(labels))
     html = f"""
-    <div style='margin-top:10px; line-height:16px;'>
+    <div style='margin-top:0px; line-height:16px;'>
         <b>{title}</b>
         <div style='margin-top:6px; display:flex; flex-wrap:wrap; row-gap:6px;'>
     """
@@ -195,7 +195,7 @@ if st.session_state.mode == "S3_S2":
     kepler_config = lambda data_id: {
         "version": "v1",
         "config": {
-            "mapState": {"latitude": 60.25, "longitude": 24.91, "zoom": 8.7},
+            "mapState": {"latitude": 60.24, "longitude": 25.07, "zoom": 8.5},
             "mapStyle": {
                 # Use custom style instead of the built-in "dark"
                 "styleType": "carto_dark",
@@ -285,7 +285,7 @@ elif st.session_state.mode == "S2_S1":
     kepler_config = lambda data_id: {
         "version": "v1",
         "config": {
-            "mapState": {"latitude": 60.25, "longitude": 24.91, "zoom": 8.7},
+            "mapState": {"latitude": 60.24, "longitude": 25.07, "zoom": 8.5},
             "mapStyle": {
                         "id": "carto_dark",
                         "label": "Carto Dark",
