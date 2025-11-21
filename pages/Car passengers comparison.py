@@ -158,13 +158,16 @@ PERC_THRESHOLDS_S2S1 = [0.2, 0.7, 1.4, 2.0, 3.0, 5.0, 7.0]
 # --- KEPLER CONFIG FOR LINESTRINGS ---
 # * Treat lines like "polygons" color-wise by using stroke colors
 # * thickness fixed at 0.5 as you requested
+# * Center is provided explicitly (from layer bounding box)
 # ============================================================
-def kepler_config_lines(data_id, palette):
+def kepler_config_lines(data_id, palette, center_lat, center_lon):
     return {
         "version": "v1",
         "config": {
-            # Let Kepler compute center + zoom from data bounds
             "mapState": {
+                "latitude": center_lat,
+                "longitude": center_lon,
+                "zoom": 8.73,   # tweak if you want closer/further
                 "bearing": 0,
                 "pitch": 0
             },
@@ -184,8 +187,8 @@ def kepler_config_lines(data_id, palette):
                         "isVisible": True,
                         "visConfig": {
                             "opacity": 0.9,
-                            "stroked": True,
-                            "filled": False,
+                            "stroked": True,     # important for LineStrings
+                            "filled": False,     # polygons only; keep False for lines
                             "thickness": 0.5,
                             "colorRange": {"colors": palette},
                             "strokeColorRange": {"colors": palette},
@@ -198,7 +201,7 @@ def kepler_config_lines(data_id, palette):
                 }]
             },
             "options": {
-                "centerMap": True,   # ✅ auto-centre + auto-zoom to data
+                "centerMap": False,   # we now control centre via mapState
                 "readOnly": False
             }
         }
@@ -220,6 +223,11 @@ if st.session_state.mode == "S3_S2":
 
     # --- LINESTRING DATASETS ---
     gdf = load_dataset("Datasets/Traffic changes/s2_s3_cars_difference_rebounds_abs_change.gpkg")
+
+    # Compute centre from bounding box
+    minx, miny, maxx, maxy = gdf.total_bounds
+    center_lon = (minx + maxx) / 2
+    center_lat = (miny + maxy) / 2
 
     # Ensure percentage_change is float
     if "percentage_change" in gdf.columns:
@@ -279,9 +287,9 @@ if st.session_state.mode == "S3_S2":
     df_perc = gdf_perc[["Percentage change formatted", "geometry_json"]].copy()
     df_perc["Colour code"] = gdf_perc["color_perc_hex"]
 
-    # Build maps (LineString-aware)
-    cfg_abs = kepler_config_lines("absolute_change", COLOR_PALETTE)
-    cfg_perc = kepler_config_lines("percentage_change", COLOR_PALETTE)
+    # Build maps (LineString-aware) with computed centre
+    cfg_abs = kepler_config_lines("absolute_change", COLOR_PALETTE, center_lat, center_lon)
+    cfg_perc = kepler_config_lines("percentage_change", COLOR_PALETTE, center_lat, center_lon)
 
     col1, col2 = st.columns(2)
     with col1:
@@ -319,6 +327,11 @@ elif st.session_state.mode == "S2_S1":
 
     # --- LINESTRING DATASETS ---
     gdf = load_dataset("Datasets/Traffic changes/s1_s2_cars_difference_rebounds_abs_change.gpkg")
+
+    # Compute centre from bounding box
+    minx, miny, maxx, maxy = gdf.total_bounds
+    center_lon = (minx + maxx) / 2
+    center_lat = (miny + maxy) / 2
 
     # Ensure percentage_change is float
     if "percentage_change" in gdf.columns:
@@ -376,8 +389,8 @@ elif st.session_state.mode == "S2_S1":
     df_perc = gdf_perc[["Percentage change formatted", "geometry_json"]].copy()
     df_perc["Colour code"] = gdf_perc["color_perc_hex"]
 
-    cfg_abs = kepler_config_lines("absolute_change", COLOR_PALETTE)
-    cfg_perc = kepler_config_lines("percentage_change", COLOR_PALETTE)
+    cfg_abs = kepler_config_lines("absolute_change", COLOR_PALETTE, center_lat, center_lon)
+    cfg_perc = kepler_config_lines("percentage_change", COLOR_PALETTE, center_lat, center_lon)
 
     col1, col2 = st.columns(2)
     with col1:
