@@ -1,10 +1,13 @@
+import os
+import json
+
 import streamlit as st
 import geopandas as gpd
 import pandas as pd
 import numpy as np
-import json
+
 from keplergl import KeplerGl
-from streamlit_keplergl import keplergl_static  # not used anymore but can be removed
+# from streamlit_keplergl import keplergl_static  # no longer used
 from navigation import load_sidebar
 import streamlit.components.v1 as components
 
@@ -17,7 +20,7 @@ MAP_HEIGHT = 500
 # --- PAGE SETUP & STYLE ---
 # ============================================================
 st.set_page_config(layout="wide")
-                   #page_title="Car passengers comparison"
+# page_title="Car passengers comparison"
 
 st.markdown("""
 <style>
@@ -38,7 +41,7 @@ div[data-testid="stSidebarNav"] ul {
 """, unsafe_allow_html=True)
 
 load_sidebar()
-    
+
 st.markdown("""
 <style>
 .block-container {padding-top: 3rem !important;}
@@ -109,6 +112,7 @@ def make_color_legend(title, colors, labels, reverse=False):
     html += "</div></div>"
     st.markdown(html, unsafe_allow_html=True)
 
+
 def get_color(value, thresholds, palette, reverse=False, default="#888888"):
     if pd.isna(value):
         return default
@@ -123,6 +127,7 @@ def get_color(value, thresholds, palette, reverse=False, default="#888888"):
     elif value <= thresholds[6]: return palette[6]
     else: return palette[-1]
 
+
 def load_dataset(path):
     gdf = gpd.read_file(path)
     # Ensure WGS84 for kepler.gl
@@ -130,21 +135,28 @@ def load_dataset(path):
         gdf = gdf.to_crs(4326)
     return gdf
 
-# Helper to render Kepler map via raw HTML + resize hack
-def render_kepler_map(map_obj, height=MAP_HEIGHT):
-    html_bytes = map_obj._repr_html_()
 
-    # In some environments this is bytes, in others it's already str
-    if isinstance(html_bytes, bytes):
-        html = html_bytes.decode("utf-8")
-    else:
-        html = html_bytes
+# Helper to render Kepler map via saved HTML + resize hack
+def render_kepler_map(map_obj, height=MAP_HEIGHT, key="kepler"):
+    # 1) Save Kepler map to a temporary HTML file
+    tmp_file = f"kepler_{key}.html"
+    map_obj.save_to_html(file_name=tmp_file, read_only=True)
 
+    # 2) Read HTML back in
+    with open(tmp_file, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    # 3) Optionally remove temp file
+    try:
+        os.remove(tmp_file)
+    except OSError:
+        pass
+
+    # 4) Inject a small resize hack so the canvas fills the iframe
     html = html.replace(
         "</body>",
         """
         <script>
-        // Force Kepler to recompute layout after Streamlit sizes the iframe
         setTimeout(function() {
             window.dispatchEvent(new Event('resize'));
         }, 500);
@@ -153,8 +165,9 @@ def render_kepler_map(map_obj, height=MAP_HEIGHT):
         """
     )
 
-    import streamlit.components.v1 as components
-    components.html(html, height=height)
+    # 5) Render inside Streamlit iframe
+    components.html(html, height=height, scrolling=False)
+
 
 # Color palette (7 steps)
 COLOR_PALETTE = ["#3B0A45", "#78001E", "#B52F0D", "#D65E00", "#E98000", "#F3A300", "#FFD400"]
@@ -222,7 +235,10 @@ def kepler_config_lines(data_id, palette):
 # --- PAGE 1: S3 vs S2 (mostly negative, lowest = brightest) ---
 # ============================================================
 if st.session_state.mode == "S3_S2":
-    st.markdown("<h3>Difference in the number of car passengers at the selected percentage of the remote-working population VS at the remote-working population percentage in S3</h3>", unsafe_allow_html=True)
+    st.markdown(
+        "<h3>Difference in the number of car passengers at the selected percentage of the remote-working population VS at the remote-working population percentage in S3</h3>",
+        unsafe_allow_html=True
+    )
 
     if st.button("S2 vs S1 comparison"):
         st.session_state.mode = "S2_S1"
@@ -245,8 +261,17 @@ if st.session_state.mode == "S3_S2":
 
     col_slider, _, _, _ = st.columns([0.35, 0.08, 0.07, 0.5])
     with col_slider:
-        st.markdown("<p style='font-weight:600; margin-bottom:6px;'>The percentage of remote working population</p>", unsafe_allow_html=True)
-        slider_val = st.slider("slider_s3s2", 24.0, 47.3, 47.3, 0.1, format="%.1f", label_visibility="collapsed")
+        st.markdown(
+            "<p style='font-weight:600; margin-bottom:6px;'>The percentage of remote working population</p>",
+            unsafe_allow_html=True
+        )
+        slider_val = st.slider(
+            "slider_s3s2",
+            24.0, 47.3, 47.3,
+            0.1,
+            format="%.1f",
+            label_visibility="collapsed"
+        )
 
     factor = (47.3 - slider_val) / (47.3 - 24.0)
 
@@ -288,25 +313,31 @@ if st.session_state.mode == "S3_S2":
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=MAP_HEIGHT, data={"absolute_change": df_abs}, config=cfg_abs)
-        render_kepler_map(map_abs, height=MAP_HEIGHT)
+        render_kepler_map(map_abs, height=MAP_HEIGHT, key="abs_s3s2")
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
-            COLOR_PALETTE[::-1], [f"≤ {v:.1f}" for v in thresholds_abs]
+            COLOR_PALETTE[::-1],
+            [f"≤ {v:.1f}" for v in thresholds_abs]
         )
+
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=MAP_HEIGHT, data={"percentage_change": df_perc}, config=cfg_perc)
-        render_kepler_map(map_perc, height=MAP_HEIGHT)
+        render_kepler_map(map_perc, height=MAP_HEIGHT, key="perc_s3s2")
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
-            COLOR_PALETTE[::-1], [f"≤ {v*100:.1f}%" for v in thresholds_perc]
+            COLOR_PALETTE[::-1],
+            [f"≤ {v*100:.1f}%" for v in thresholds_perc]
         )
 
 # ============================================================
 # --- PAGE 2: S2 vs S1 (mostly positive, highest = brightest) ---
 # ============================================================
 elif st.session_state.mode == "S2_S1":
-    st.markdown("<h3>Difference in the number of car passengers at the selected percentage of the remote-working population VS at the remote-working population percentage in S2</h3>", unsafe_allow_html=True)
+    st.markdown(
+        "<h3>Difference in the number of car passengers at the selected percentage of the remote-working population VS at the remote-working population percentage in S2</h3>",
+        unsafe_allow_html=True
+    )
 
     if st.button("Back to S3 vs S2"):
         st.session_state.mode = "S3_S2"
@@ -329,8 +360,17 @@ elif st.session_state.mode == "S2_S1":
 
     col_slider, _, _, _ = st.columns([0.35, 0.08, 0.07, 0.5])
     with col_slider:
-        st.markdown("<p style='font-weight:600; margin-bottom:6px;'>The percentage of remote working population</p>", unsafe_allow_html=True)
-        slider_val = st.slider("slider_s2s1", 0.0, 24.0, 0.0, 0.1, format="%.1f", label_visibility="collapsed")
+        st.markdown(
+            "<p style='font-weight:600; margin-bottom:6px;'>The percentage of remote working population</p>",
+            unsafe_allow_html=True
+        )
+        slider_val = st.slider(
+            "slider_s2s1",
+            0.0, 24.0, 0.0,
+            0.1,
+            format="%.1f",
+            label_visibility="collapsed"
+        )
 
     factor = slider_val / 24.0
 
@@ -369,16 +409,19 @@ elif st.session_state.mode == "S2_S1":
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=MAP_HEIGHT, data={"absolute_change": df_abs}, config=cfg_abs)
-        render_kepler_map(map_abs, height=MAP_HEIGHT)
+        render_kepler_map(map_abs, height=MAP_HEIGHT, key="abs_s2s1")
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
-            COLOR_PALETTE, [f"≤ {v:.1f}" for v in thresholds_abs]
+            COLOR_PALETTE,
+            [f"≤ {v:.1f}" for v in thresholds_abs]
         )
+
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=MAP_HEIGHT, data={"percentage_change": df_perc}, config=cfg_perc)
-        render_kepler_map(map_perc, height=MAP_HEIGHT)
+        render_kepler_map(map_perc, height=MAP_HEIGHT, key="perc_s2s1")
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
-            COLOR_PALETTE, [f"≤ {v*100:.1f}%" for v in thresholds_perc]
+            COLOR_PALETTE,
+            [f"≤ {v*100:.1f}%" for v in thresholds_perc]
         )
