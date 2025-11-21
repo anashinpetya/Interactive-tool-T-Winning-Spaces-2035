@@ -140,12 +140,18 @@ def kepler_config_lines(data_id, palette):
     return {
         "version": "v1",
         "config": {
-            "mapState": {"latitude": 60.25, "longitude": 25.05, "zoom": 8.75},
+            "mapState": {
+                "latitude": 60.25,
+                "longitude": 25.05,
+                "zoom": 8.75,
+                "bearing": 0,
+                "pitch": 0
+            },
             "mapStyle": {
-                        "id": "carto_dark",
-                        "label": "Carto Dark",
-                        "url": CARTO_DARK,  # style.json URL
-                    },
+                "id": "carto_dark",
+                "label": "Carto Dark",
+                "url": CARTO_DARK,  # style.json URL
+            },
             "visState": {
                 "layers": [{
                     "id": f"{data_id}_layer",
@@ -169,9 +175,14 @@ def kepler_config_lines(data_id, palette):
                         "strokeColorScale": "ordinal",
                     }
                 }]
+            },
+            "options": {
+                "centerMap": False,   # ✅ prevents auto-scaling to data bounds
+                "readOnly": False     # set True if you want fixed, non-movable map
             }
         }
     }
+
 
 # ============================================================
 # --- PAGE 1: S3 vs S2 (mostly negative, lowest = brightest) ---

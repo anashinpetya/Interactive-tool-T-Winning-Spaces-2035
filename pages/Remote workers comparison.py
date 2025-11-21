@@ -314,23 +314,47 @@ elif st.session_state.mode == "S2_S1":
     df_abs["Colour code"] = gdf["color_abs_hex"]
 
     kepler_config_abs = {
-        "version": "v1",
-        "config": {"mapState": {"latitude": 60.25, "longitude": 25.08, "zoom": 8.75},
-                   "mapStyle": {
-                        "id": "carto_dark",
-                        "label": "Carto Dark",
-                        "url": CARTO_DARK,  # style.json URL
-                    },
-                   "visState": {"layers": [{
-                       "id": "abs_layer", "type": "geojson",
-                       "config": {"dataId": "absolute_change", "columns": {"geojson": "geometry_json"},
-                                  "isVisible": True,
-                                  "visConfig": {"opacity": opacity_val, "filled": True,
-                                                "colorRange": {"colors": COLOR_PALETTE}}},
-                       "visualChannels": {"colorField": {"name": "Colour code", "type": "string"},
-                                          "colorScale": "ordinal"},
-                   }]}}
+    "version": "v1",
+    "config": {
+        "mapState": {
+            "latitude": 60.25,
+            "longitude": 25.08,
+            "zoom": 8.75,
+            "bearing": 0,
+            "pitch": 0
+        },
+        "mapStyle": {
+            "id": "carto_dark",
+            "label": "Carto Dark",
+            "url": CARTO_DARK,  # style.json URL
+        },
+        "visState": {
+            "layers": [{
+                "id": "abs_layer",
+                "type": "geojson",
+                "config": {
+                    "dataId": "absolute_change",
+                    "columns": {"geojson": "geometry_json"},
+                    "isVisible": True,
+                    "visConfig": {
+                        "opacity": opacity_val,
+                        "filled": True,
+                        "colorRange": {"colors": COLOR_PALETTE}
+                    }
+                },
+                "visualChannels": {
+                    "colorField": {"name": "Colour code", "type": "string"},
+                    "colorScale": "ordinal"
+                },
+            }]
+        },
+        "options": {
+            "centerMap": False,   # <- prevents auto-fit to bounds
+            "readOnly": False     # set True if you want to lock panning/zoom
+        }
     }
+}
+
 
     col1, col2 = st.columns([0.45, 0.55])
     with col1:
