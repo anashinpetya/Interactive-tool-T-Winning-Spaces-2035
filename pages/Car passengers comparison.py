@@ -34,16 +34,6 @@ div[data-testid="stSidebarNav"] ul {
     padding-top: 3rem !important;
 }
 
-/* =============================
-   FIXED MAP WIDTH ONLY
-   ============================= */
-.fixed-map {
-    width: 900px;        /* fixed width for Kepler maps */
-    max-width: 900px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
 /* --- Button Styling --- */
 div[data-testid="stButton"] button {
     background-color: #FF4B4B !important;
@@ -74,6 +64,7 @@ div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] {
     height: 12px !important;
 }
 
+/* Properly center min/max labels */
 div[data-testid="stSlider"] div[data-testid="stTickBar"] > div:first-child > div,
 div[data-testid="stSlider"] div[data-testid="stTickBar"] > div:last-child > div {
     transform: translateX(-50%) !important;
@@ -297,12 +288,9 @@ if st.session_state.mode == "S3_S2":
 
     with col1:
         st.markdown("**Absolute Change**")
-        # fixed-width wrapper
-        st.markdown('<div class="fixed-map">', unsafe_allow_html=True)
+        # Fixed pixel width via keplergl_static
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=cfg_abs)
-        keplergl_static(map_abs)
-        st.markdown('</div>', unsafe_allow_html=True)
-
+        keplergl_static(map_abs, height=380, width=560)
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
             COLOR_PALETTE[::-1],
@@ -311,12 +299,8 @@ if st.session_state.mode == "S3_S2":
 
     with col2:
         st.markdown("**Percentage Change**")
-        # fixed-width wrapper
-        st.markdown('<div class="fixed-map">', unsafe_allow_html=True)
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=cfg_perc)
-        keplergl_static(map_perc)
-        st.markdown('</div>', unsafe_allow_html=True)
-
+        keplergl_static(map_perc, height=380, width=560)
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
             COLOR_PALETTE[::-1],
@@ -402,12 +386,8 @@ elif st.session_state.mode == "S2_S1":
 
     with col1:
         st.markdown("**Absolute Change**")
-        # fixed-width wrapper
-        st.markdown('<div class="fixed-map">', unsafe_allow_html=True)
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=cfg_abs)
-        keplergl_static(map_abs)
-        st.markdown('</div>', unsafe_allow_html=True)
-
+        keplergl_static(map_abs, height=380, width=560)
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
             COLOR_PALETTE,
@@ -416,12 +396,8 @@ elif st.session_state.mode == "S2_S1":
 
     with col2:
         st.markdown("**Percentage Change**")
-        # fixed-width wrapper
-        st.markdown('<div class="fixed-map">', unsafe_allow_html=True)
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=cfg_perc)
-        keplergl_static(map_perc)
-        st.markdown('</div>', unsafe_allow_html=True)
-
+        keplergl_static(map_perc, height=380, width=560)
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
             COLOR_PALETTE,
