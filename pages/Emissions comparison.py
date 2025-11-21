@@ -197,7 +197,7 @@ if st.session_state.mode == "S3_S2":
     "config": {
         "mapState": {
             "latitude": 60.25,
-            "longitude": 25.08,
+            "longitude": 25.1,
             "zoom": 8.75,
             "bearing": 0,
             "pitch": 0,
