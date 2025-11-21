@@ -132,7 +132,14 @@ def load_dataset(path):
 
 # Helper to render Kepler map via raw HTML + resize hack
 def render_kepler_map(map_obj, height=MAP_HEIGHT):
-    html = map_obj._repr_html_()
+    html_bytes = map_obj._repr_html_()
+
+    # In some environments this is bytes, in others it's already str
+    if isinstance(html_bytes, bytes):
+        html = html_bytes.decode("utf-8")
+    else:
+        html = html_bytes
+
     html = html.replace(
         "</body>",
         """
@@ -145,6 +152,8 @@ def render_kepler_map(map_obj, height=MAP_HEIGHT):
         </body>
         """
     )
+
+    import streamlit.components.v1 as components
     components.html(html, height=height)
 
 # Color palette (7 steps)
