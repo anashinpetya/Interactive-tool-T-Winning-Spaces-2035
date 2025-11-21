@@ -165,7 +165,7 @@ def kepler_config_lines(data_id, palette):
         "config": {
             "mapState": {
                 "latitude": 60.259889999999984,
-                "longitude": 25.1,
+                "longitude": 25.2,
                 "zoom": 8.6,
                 "bearing": 0,
                 "pitch": 0
