@@ -163,10 +163,10 @@ def kepler_config_lines(data_id, palette):
     return {
         "version": "v1",
         "config": {
-            # We don't force a specific zoom; Kepler will compute it from data bounds
             "mapState": {
-                "latitude": 60.26,   # optional initial guess, will be overridden by centerMap=True
+                "latitude": 60.26,
                 "longitude": 24.9,
+                "zoom": 8.73,
                 "bearing": 0,
                 "pitch": 0
             },
@@ -200,12 +200,11 @@ def kepler_config_lines(data_id, palette):
                 }]
             },
             "options": {
-                "centerMap": True,   # ✅ auto-fit to data bounds (auto-zoom & center)
-                "readOnly": False    # set True if you want to lock pan/zoom
+                "centerMap": False,   # <- don't auto-fit to data bounds
+                "readOnly": False     # or True if you don't want user to change view
             }
         }
     }
-
 
 # ============================================================
 # --- PAGE 1: S3 vs S2 (mostly negative, lowest = brightest) ---
