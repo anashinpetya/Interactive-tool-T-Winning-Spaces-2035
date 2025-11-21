@@ -163,17 +163,15 @@ def kepler_config_lines(data_id, palette):
     return {
         "version": "v1",
         "config": {
-            # We don't force a specific zoom; Kepler will compute it from data bounds
+            # Let Kepler fully determine center & zoom
             "mapState": {
-                "latitude": 60.26,   # optional initial guess, will be overridden by centerMap=True
-                "longitude": 24.9,
                 "bearing": 0,
                 "pitch": 0
             },
             "mapStyle": {
                 "id": "carto_dark",
                 "label": "Carto Dark",
-                "url": CARTO_DARK,  # style.json URL
+                "url": CARTO_DARK,
             },
             "visState": {
                 "layers": [{
@@ -200,11 +198,11 @@ def kepler_config_lines(data_id, palette):
                 }]
             },
             "options": {
-                "centerMap": True,   # ✅ auto-fit to data bounds (auto-zoom & center)
-                "readOnly": False    # set True if you want to lock pan/zoom
+                "centerMap": True   # ✅ FULL auto-centre + auto-zoom
             }
         }
     }
+
 
 
 # ============================================================
