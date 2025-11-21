@@ -200,7 +200,7 @@ def kepler_config_lines(data_id, palette):
                 }]
             },
             "options": {
-                "centerMap": False,   # <- don't auto-fit to data bounds
+                "centerMap": True,   # <- don't auto-fit to data bounds
                 "readOnly": False     # or True if you don't want user to change view
             }
         }
