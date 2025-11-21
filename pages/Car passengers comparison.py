@@ -4,11 +4,13 @@ import pandas as pd
 import numpy as np
 import json
 from keplergl import KeplerGl
-from streamlit_keplergl import keplergl_static
+from streamlit_keplergl import keplergl_static  # not used anymore but can be removed
 from navigation import load_sidebar
+import streamlit.components.v1 as components
 
 CARTO_DARK = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
 
+# Unified map height (change this if needed)
 MAP_HEIGHT = 500
 
 # ============================================================
@@ -128,6 +130,23 @@ def load_dataset(path):
         gdf = gdf.to_crs(4326)
     return gdf
 
+# Helper to render Kepler map via raw HTML + resize hack
+def render_kepler_map(map_obj, height=MAP_HEIGHT):
+    html = map_obj._repr_html_()
+    html = html.replace(
+        "</body>",
+        """
+        <script>
+        // Force Kepler to recompute layout after Streamlit sizes the iframe
+        setTimeout(function() {
+            window.dispatchEvent(new Event('resize'));
+        }, 500);
+        </script>
+        </body>
+        """
+    )
+    components.html(html, height=height)
+
 # Color palette (7 steps)
 COLOR_PALETTE = ["#3B0A45", "#78001E", "#B52F0D", "#D65E00", "#E98000", "#F3A300", "#FFD400"]
 
@@ -155,12 +174,12 @@ def kepler_config_lines(data_id, palette):
     return {
         "version": "v1",
         "config": {
-            "mapState": {"latitude": 60.26, "longitude": 24.9, "zoom": 9.5},
+            "mapState": {"latitude": 60.26, "longitude": 24.9, "zoom": 8.73},
             "mapStyle": {
-                        "id": "carto_dark",
-                        "label": "Carto Dark",
-                        "url": CARTO_DARK,  # style.json URL
-                    },
+                "id": "carto_dark",
+                "label": "Carto Dark",
+                "url": CARTO_DARK,  # style.json URL
+            },
             "visState": {
                 "layers": [{
                     "id": f"{data_id}_layer",
@@ -260,16 +279,15 @@ if st.session_state.mode == "S3_S2":
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=MAP_HEIGHT, data={"absolute_change": df_abs}, config=cfg_abs)
-        keplergl_static(map_abs, height=MAP_HEIGHT)
+        render_kepler_map(map_abs, height=MAP_HEIGHT)
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
             COLOR_PALETTE[::-1], [f"≤ {v:.1f}" for v in thresholds_abs]
         )
-
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=MAP_HEIGHT, data={"percentage_change": df_perc}, config=cfg_perc)
-        keplergl_static(map_perc, height=MAP_HEIGHT)
+        render_kepler_map(map_perc, height=MAP_HEIGHT)
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
             COLOR_PALETTE[::-1], [f"≤ {v*100:.1f}%" for v in thresholds_perc]
@@ -342,16 +360,15 @@ elif st.session_state.mode == "S2_S1":
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=MAP_HEIGHT, data={"absolute_change": df_abs}, config=cfg_abs)
-        keplergl_static(map_abs, height=MAP_HEIGHT)
+        render_kepler_map(map_abs, height=MAP_HEIGHT)
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
             COLOR_PALETTE, [f"≤ {v:.1f}" for v in thresholds_abs]
         )
-
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=MAP_HEIGHT, data={"percentage_change": df_perc}, config=cfg_perc)
-        keplergl_static(map_perc, height=MAP_HEIGHT)
+        render_kepler_map(map_perc, height=MAP_HEIGHT)
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
             COLOR_PALETTE, [f"≤ {v*100:.1f}%" for v in thresholds_perc]
