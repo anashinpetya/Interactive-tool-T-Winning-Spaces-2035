@@ -13,15 +13,14 @@ CARTO_DARK = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
 # --- PAGE SETUP & STYLE ---
 # ============================================================
 st.set_page_config(layout="wide")
-# page_title="Car passengers comparison"
 
 st.markdown("""
 <style>
 /* Hide text of default Streamlit sidebar menu */
 div[data-testid="stSidebarNav"] span,
 div[data-testid="stSidebarNav"] a {
-    color: transparent !important;      /* hides text */
-    visibility: hidden !important;      /* prevents hover showing text */
+    color: transparent !important;
+    visibility: hidden !important;
 }
 
 /* Optionally remove spacing to collapse it */
@@ -29,14 +28,21 @@ div[data-testid="stSidebarNav"] ul {
     margin: 0 !important;
     padding: 0 !important;
 }
-</style>
-""", unsafe_allow_html=True)
 
-load_sidebar()
+/* Just control top padding of main container, no max-width */
+.block-container {
+    padding-top: 3rem !important;
+}
 
-st.markdown("""
-<style>
-.block-container {padding-top: 3rem !important;}
+/* =============================
+   FIXED MAP WIDTH ONLY
+   ============================= */
+.fixed-map {
+    width: 900px;        /* fixed width for Kepler maps */
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
 
 /* --- Button Styling --- */
 div[data-testid="stButton"] button {
@@ -53,6 +59,7 @@ div[data-testid="stButton"] button {
     display: block !important;
     margin: 0 auto !important;
 }
+
 div[data-testid="stButton"] button:hover {
     background-color: #ff7373 !important;
 }
@@ -61,12 +68,12 @@ div[data-testid="stButton"] button:hover {
 div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div {
     height: 2px !important;
 }
+
 div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] {
     width: 12px !important;
     height: 12px !important;
 }
 
-/* Properly center min/max labels */
 div[data-testid="stSlider"] div[data-testid="stTickBar"] > div:first-child > div,
 div[data-testid="stSlider"] div[data-testid="stTickBar"] > div:last-child > div {
     transform: translateX(-50%) !important;
@@ -76,6 +83,8 @@ div[data-testid="stSlider"] div[data-testid="stTickBar"] > div:last-child > div 
 }
 </style>
 """, unsafe_allow_html=True)
+
+load_sidebar()
 
 # ============================================================
 # --- NAV STATE ---
@@ -157,7 +166,7 @@ PERC_THRESHOLDS_S2S1 = [0.2, 0.7, 1.4, 2.0, 3.0, 5.0, 7.0]
 # ============================================================
 # --- KEPLER CONFIG FOR LINESTRINGS ---
 # * Treat lines like "polygons" color-wise by using stroke colors
-# * thickness fixed at 0.5 as you requested
+# * thickness fixed at 0.5
 # ============================================================
 def kepler_config_lines(data_id, palette):
     return {
@@ -200,8 +209,8 @@ def kepler_config_lines(data_id, palette):
                 }]
             },
             "options": {
-                "centerMap": False,   # <- don't auto-fit to data bounds
-                "readOnly": False     # or True if you don't want user to change view
+                "centerMap": False,
+                "readOnly": False
             }
         }
     }
@@ -285,10 +294,15 @@ if st.session_state.mode == "S3_S2":
     cfg_perc = kepler_config_lines("percentage_change", COLOR_PALETTE)
 
     col1, col2 = st.columns(2)
+
     with col1:
         st.markdown("**Absolute Change**")
+        # fixed-width wrapper
+        st.markdown('<div class="fixed-map">', unsafe_allow_html=True)
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=cfg_abs)
         keplergl_static(map_abs)
+        st.markdown('</div>', unsafe_allow_html=True)
+
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
             COLOR_PALETTE[::-1],
@@ -297,8 +311,12 @@ if st.session_state.mode == "S3_S2":
 
     with col2:
         st.markdown("**Percentage Change**")
+        # fixed-width wrapper
+        st.markdown('<div class="fixed-map">', unsafe_allow_html=True)
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=cfg_perc)
         keplergl_static(map_perc)
+        st.markdown('</div>', unsafe_allow_html=True)
+
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
             COLOR_PALETTE[::-1],
@@ -381,10 +399,15 @@ elif st.session_state.mode == "S2_S1":
     cfg_perc = kepler_config_lines("percentage_change", COLOR_PALETTE)
 
     col1, col2 = st.columns(2)
+
     with col1:
         st.markdown("**Absolute Change**")
+        # fixed-width wrapper
+        st.markdown('<div class="fixed-map">', unsafe_allow_html=True)
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=cfg_abs)
         keplergl_static(map_abs)
+        st.markdown('</div>', unsafe_allow_html=True)
+
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
             COLOR_PALETTE,
@@ -393,8 +416,12 @@ elif st.session_state.mode == "S2_S1":
 
     with col2:
         st.markdown("**Percentage Change**")
+        # fixed-width wrapper
+        st.markdown('<div class="fixed-map">', unsafe_allow_html=True)
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=cfg_perc)
         keplergl_static(map_perc)
+        st.markdown('</div>', unsafe_allow_html=True)
+
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
             COLOR_PALETTE,
