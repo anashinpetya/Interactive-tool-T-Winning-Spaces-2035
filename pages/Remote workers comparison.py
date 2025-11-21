@@ -200,7 +200,7 @@ if st.session_state.mode == "S3_S2":
 
     kepler_config_perc = {
         "version": "v1",
-        "config": {"mapState": {"latitude": 60.25, "longitude": 24.91, "zoom": 8.7},
+        "config": {"mapState": {"latitude": 60.25, "longitude": 25.05, "zoom": 8.75},
                    "mapStyle": {
                 # Use custom style instead of the built-in "dark"
                 "styleType": "carto_dark",
