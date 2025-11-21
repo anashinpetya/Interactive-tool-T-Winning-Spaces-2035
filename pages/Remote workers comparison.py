@@ -261,7 +261,7 @@ elif st.session_state.mode == "S2_S1":
 
     kepler_config_abs = {
         "version": "v1",
-        "config": {"mapState": {"latitude": 60.25, "longitude": 25.05, "zoom": 8.75},
+        "config": {"mapState": {"latitude": 60.25, "longitude": 25.08, "zoom": 8.75},
                    "mapStyle": {
                         "id": "carto_dark",
                         "label": "Carto Dark",
