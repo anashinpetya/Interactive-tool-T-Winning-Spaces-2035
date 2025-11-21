@@ -163,7 +163,13 @@ def kepler_config_lines(data_id, palette):
     return {
         "version": "v1",
         "config": {
-            "mapState": {"latitude": 60.25, "longitude": 25.07, "zoom": 8.6},
+            "mapState": {
+                "latitude": 60.26,
+                "longitude": 24.9,
+                "zoom": 8.73,
+                "bearing": 0,
+                "pitch": 0
+            },
             "mapStyle": {
                 "id": "carto_dark",
                 "label": "Carto Dark",
@@ -180,20 +186,22 @@ def kepler_config_lines(data_id, palette):
                         "isVisible": True,
                         "visConfig": {
                             "opacity": 0.9,
-                            "stroked": True,     # important for LineStrings
-                            "filled": False,     # polygons only; keep False for lines
-                            "thickness": 0.5,    # requested line width
-                            "colorRange": {"colors": palette},          # used by colorField (fill)
-                            "strokeColorRange": {"colors": palette},    # used by strokeColorField
+                            "stroked": True,
+                            "filled": False,
+                            "thickness": 0.5,
+                            "colorRange": {"colors": palette},
+                            "strokeColorRange": {"colors": palette},
                         },
                     },
                     "visualChannels": {
-                        # For lines we color via STROKE color channels:
                         "strokeColorField": {"name": "Colour code", "type": "string"},
                         "strokeColorScale": "ordinal",
-                        # Leave fill color channels unused for lines
                     }
                 }]
+            },
+            "options": {
+                "centerMap": False,   # <- don't auto-fit to data bounds
+                "readOnly": False     # or True if you don't want user to change view
             }
         }
     }
