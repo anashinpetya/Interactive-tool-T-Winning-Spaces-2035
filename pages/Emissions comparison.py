@@ -234,7 +234,7 @@ if st.session_state.mode == "S3_S2":
             }],
         },
         "options": {
-            "centerMap": True,   # <- don't auto-fit to data bounds
+            "centerMap": False,   # <- don't auto-fit to data bounds
             "readOnly": False,    # or True if you don't want the user to pan/zoom
         },
     },
@@ -244,7 +244,7 @@ if st.session_state.mode == "S3_S2":
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=kepler_config("absolute_change"))
-        keplergl_static(map_abs)
+        keplergl_static(map_abs, height=380, width=560)
         make_color_legend(
             "Legend: Absolute change in the amount of CO2 emissions, kg",
             COLOR_PALETTE[::-1], [f"≤ {v:.1f}" for v in thresholds_abs], reverse=False
@@ -252,7 +252,7 @@ if st.session_state.mode == "S3_S2":
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=kepler_config("percentage_change"))
-        keplergl_static(map_perc)
+        keplergl_static(map_perc, height=380, width=560)
         make_color_legend(
             "Legend: Percentage change in the amount of CO2 emissions (%)",
             COLOR_PALETTE[::-1], [f"≤ {v:.1f}%" for v in PERC_THRESHOLDS_S3S2], reverse=False
@@ -356,7 +356,7 @@ elif st.session_state.mode == "S2_S1":
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=kepler_config("absolute_change"))
-        keplergl_static(map_abs)
+        keplergl_static(map_abs, height=380, width=560)
         make_color_legend(
             "Legend: Absolute change in the amount of CO2 emissions, kg",
             COLOR_PALETTE, [f"≤ {v:.1f}" for v in thresholds_abs]
@@ -364,7 +364,7 @@ elif st.session_state.mode == "S2_S1":
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=kepler_config("percentage_change"))
-        keplergl_static(map_perc)
+        keplergl_static(map_perc, height=380, width=560)
         make_color_legend(
             "Legend: Percentage change in the amount of CO2 emissions (%)",
             COLOR_PALETTE, [f"≤ {v:.1f}%" for v in PERC_THRESHOLDS_S2S1]
