@@ -163,10 +163,8 @@ def kepler_config_lines(data_id, palette):
     return {
         "version": "v1",
         "config": {
+            # Let Kepler compute center + zoom from data bounds
             "mapState": {
-                "latitude": 60.26,
-                "longitude": 24.9,
-                "zoom": 8.73,
                 "bearing": 0,
                 "pitch": 0
             },
@@ -200,11 +198,12 @@ def kepler_config_lines(data_id, palette):
                 }]
             },
             "options": {
-                "centerMap": True,   # <- don't auto-fit to data bounds
-                "readOnly": False     # or True if you don't want user to change view
+                "centerMap": True,   # ✅ auto-centre + auto-zoom to data
+                "readOnly": False
             }
         }
     }
+
 
 # ============================================================
 # --- PAGE 1: S3 vs S2 (mostly negative, lowest = brightest) ---
