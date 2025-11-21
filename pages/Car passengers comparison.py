@@ -294,8 +294,15 @@ if st.session_state.mode == "S3_S2":
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Absolute Change**")
+        # fixed-width container so the visual frame is the same on all screens
+        st.markdown(
+            "<div style='width: 900px; margin: 0 auto;'>",
+            unsafe_allow_html=True
+        )
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=cfg_abs)
         keplergl_static(map_abs)
+        st.markdown("</div>", unsafe_allow_html=True)
+
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
             COLOR_PALETTE[::-1],
@@ -304,8 +311,14 @@ if st.session_state.mode == "S3_S2":
 
     with col2:
         st.markdown("**Percentage Change**")
+        st.markdown(
+            "<div style='width: 900px; margin: 0 auto;'>",
+            unsafe_allow_html=True
+        )
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=cfg_perc)
         keplergl_static(map_perc)
+        st.markdown("</div>", unsafe_allow_html=True)
+
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
             COLOR_PALETTE[::-1],
@@ -395,8 +408,14 @@ elif st.session_state.mode == "S2_S1":
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Absolute Change**")
+        st.markdown(
+            "<div style='width: 900px; margin: 0 auto;'>",
+            unsafe_allow_html=True
+        )
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=cfg_abs)
         keplergl_static(map_abs)
+        st.markdown("</div>", unsafe_allow_html=True)
+
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
             COLOR_PALETTE,
@@ -405,8 +424,14 @@ elif st.session_state.mode == "S2_S1":
 
     with col2:
         st.markdown("**Percentage Change**")
+        st.markdown(
+            "<div style='width: 900px; margin: 0 auto;'>",
+            unsafe_allow_html=True
+        )
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=cfg_perc)
         keplergl_static(map_perc)
+        st.markdown("</div>", unsafe_allow_html=True)
+
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
             COLOR_PALETTE,
