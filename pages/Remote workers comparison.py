@@ -175,7 +175,7 @@ if st.session_state.mode == "S3_S2":
     # --- Kepler Configs ---
     kepler_config_abs = {
         "version": "v1",
-        "config": {"mapState": {"latitude": 60.25, "longitude": 24.91, "zoom": 8.7},
+        "config": {"mapState": {"latitude": 60.25, "longitude": 25.05, "zoom": 8.75},
                    "mapStyle": {
                 # Use custom style instead of the built-in "dark"
                 "styleType": "carto_dark",
@@ -261,7 +261,7 @@ elif st.session_state.mode == "S2_S1":
 
     kepler_config_abs = {
         "version": "v1",
-        "config": {"mapState": {"latitude": 60.25, "longitude": 24.91, "zoom": 8.85},
+        "config": {"mapState": {"latitude": 60.25, "longitude": 25.05, "zoom": 8.75},
                    "mapStyle": {
                         "id": "carto_dark",
                         "label": "Carto Dark",
@@ -278,10 +278,10 @@ elif st.session_state.mode == "S2_S1":
                    }]}}
     }
 
-    col1, col2 = st.columns([0.55, 0.45])
+    col1, col2 = st.columns([0.45, 0.55])
     with col1:
         st.markdown("**Absolute Change**")
-        map_abs = KeplerGl(height=410, data={"absolute_change": df_abs}, config=kepler_config_abs)
+        map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=kepler_config_abs)
         keplergl_static(map_abs)
         make_color_legend("Legend: Absolute change in the number of remote workers",
                           COLOR_PALETTE, [f"≤ {v:.1f}" for v in thresholds_abs] + ["> max"])

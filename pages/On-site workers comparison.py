@@ -187,7 +187,7 @@ if st.session_state.mode == "S3_S2":
     kepler_config = lambda data_id: {
         "version": "v1",
         "config": {
-            "mapState": {"latitude": 60.25, "longitude": 24.91, "zoom": 8.7},
+            "mapState": {"latitude": 60.25, "longitude": 25.05, "zoom": 8.75},
             "mapStyle": {
                         "id": "carto_dark",
                         "label": "Carto Dark",
@@ -269,7 +269,7 @@ elif st.session_state.mode == "S2_S1":
     kepler_config = lambda data_id: {
         "version": "v1",
         "config": {
-            "mapState": {"latitude": 60.25, "longitude": 24.91, "zoom": 8.7},
+            "mapState": {"latitude": 60.25, "longitude": 25.05, "zoom": 8.75},
             "mapStyle": {"styleType": "dark"},
             "visState": {"layers": [{
                 "id": f"{data_id}_layer", "type": "geojson",
