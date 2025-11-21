@@ -201,7 +201,17 @@ if st.session_state.mode == "S3_S2":
     kepler_config_perc = {
         "version": "v1",
         "config": {"mapState": {"latitude": 60.25, "longitude": 24.91, "zoom": 8.7},
-                   "mapStyle": {"styleType": "dark"},
+                   "mapStyle": {
+                # Use custom style instead of the built-in "dark"
+                "styleType": "carto_dark",
+                "mapStyles": [
+                    {
+                        "id": "carto_dark",
+                        "label": "Carto Dark",
+                        "url": CARTO_DARK,  # style.json URL
+                    }
+                ],
+            },
                    "visState": {"layers": [{
                        "id": "perc_layer", "type": "geojson",
                        "config": {"dataId": "percentage_change", "columns": {"geojson": "geometry_json"},
