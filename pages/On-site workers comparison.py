@@ -27,7 +27,6 @@ div[data-testid="stSidebarNav"] ul {
     margin: 0 !important;
     padding: 0 !important;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -52,9 +51,7 @@ div[data-testid="stButton"] button {
     display: block !important;
     margin: 0 auto !important;
 }
-div[data-testid="stButton"] button:hover {
-    background-color: #ff7373 !important;
-}
+div[data-testid="stButton"] button:hover { background-color: #ff7373 !important; }
 
 /* --- Slider thinner + centered labels --- */
 div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div {
@@ -83,15 +80,16 @@ if "mode" not in st.session_state:
     st.session_state.mode = "S3_S2"  # default page
 
 # ============================================================
-# --- SHARED UTILITIES ---
+# --- UTILITY FUNCTIONS ---
 # ============================================================
 def make_color_legend(title, colors, labels, reverse=False):
-    """Compact legend with consistent spacing, centered text, and larger vertical gaps between rows."""
+    """Create a horizontal color legend with labels."""
     if reverse:
         colors = list(reversed(colors))
         labels = list(reversed(labels))
+
     html = f"""
-    <div style='margin-top:10px; line-height:16px;'>
+    <div style='margin-top:2px; line-height:16px;'>
         <b>{title}</b>
         <div style='margin-top:6px; display:flex; flex-wrap:wrap; row-gap:6px;'>
     """
@@ -119,6 +117,7 @@ def get_color(value, thresholds, palette, reverse=False):
     else: return palette[-1]
 
 
+@st.cache_data(show_spinner="Loading dataset...")
 def load_dataset(path):
     """Load GeoPackage safely and convert to EPSG:4326."""
     gdf = gpd.read_file(path)
@@ -130,32 +129,35 @@ def load_dataset(path):
 COLOR_PALETTE = ["#3B0A45", "#78001E", "#B52F0D", "#D65E00", "#E98000", "#F3A300", "#FFD400"]
 
 # ============================================================
-# --- MANUAL ABSOLUTE THRESHOLDS (EDIT THESE) ---
-#   * Only used for absolute_change, percentage still uses quantiles
-#   * Values below are just example "usual" ranges – change to your own
+# --- MANUAL THRESHOLDS ---
 # ============================================================
-# S3 vs S2: mostly negative changes, lowest = brightest
-ABS_THRESHOLDS_S3S2 = [-30.0, -20.0, -9.0, -5.0, -3.0, -1.5, -0.5]
 
-# S2 vs S1: mostly positive changes, highest = brightest
-ABS_THRESHOLDS_S2S1 = [1, 3, 7, 12, 18, 29, 40]
+ABS_THRESHOLDS_S3S2 = [-250.0, -200.0, -150.0, -100.0, -75.0, -50.0, -25.0]
+PERC_THRESHOLDS_S3S2 = [-0.6, -0.4, -0.3, -0.2, -0.1, -0.05, -0.01]
+
+ABS_THRESHOLDS_S2S1 = [10.0, 25.0, 50.0, 75.0, 100.0, 150.0, 200.0]
+PERC_THRESHOLDS_S2S1 = [0.2, 0.7, 1.4, 2.0, 3.0, 5.0, 7.0]
 
 # ============================================================
-# --- PAGE 1: S3 vs S2 (mostly negative, lowest = brightest) ---
+# --- PAGE 1: S3 vs S2 ---
 # ============================================================
 if st.session_state.mode == "S3_S2":
-    st.markdown("<h3>Difference in the number of on-site workers at the selected percentage of the remote-working population VS at the remote-working population percentage in S3</h3>", unsafe_allow_html=True)
+    st.markdown(
+        "<h3>Difference in the number of on-site workers at the selected percentage of the remote-working population VS at the remote-working population percentage in S3</h3>",
+        unsafe_allow_html=True
+    )
 
     if st.button("S2 vs S1 comparison"):
         st.session_state.mode = "S2_S1"
         st.rerun()
 
-    gdf = load_dataset("Datasets/Grid maps/s2_s3_on_site_workers_diff.gpkg")
+    gdf = load_dataset("Datasets/Workers changes/s2_s3_onsite_difference_rebounds.gpkg")
 
-    # Only percentage thresholds still use quantiles
-    quantiles_perc = [0.25, 0.46, 0.68, 0.8, 0.87, 0.93, 0.97]
+    if "percentage_change" in gdf.columns:
+        gdf["percentage_change"] = gdf["percentage_change"].astype(float)
+
     thresholds_abs = ABS_THRESHOLDS_S3S2
-    thresholds_perc = gdf["percentage_change"].quantile(quantiles_perc).tolist()
+    thresholds_perc = PERC_THRESHOLDS_S3S2
 
     col_slider, _, opacity_slider, _ = st.columns([0.35, 0.15, 0.35, 0.15])
     with col_slider:
@@ -166,11 +168,11 @@ if st.session_state.mode == "S3_S2":
         opacity_val = st.slider("opacity_s3s2", float(0), float(1), float(0.8), float(0.01), label_visibility="collapsed")
 
     factor = (47.3 - slider_val) / (47.3 - 24.0)
+
     gdf["Absolute change in the number of on-site workers"] = (gdf["absolute_change"] * (1 - factor)).round(1)
-    gdf["Percentage change numeric"] = gdf["percentage_change"] * (1 - factor) * 100  # numeric %
+    gdf["Percentage change numeric"] = gdf["percentage_change"] * (1 - factor) * 100
     gdf["Percentage change formatted"] = gdf["Percentage change numeric"].map(lambda v: f"{v:.1f}%")
 
-    # Lowest = brightest for S3 vs S2
     gdf["color_abs_hex"] = gdf["Absolute change in the number of on-site workers"].apply(
         lambda v: get_color(v, thresholds_abs, COLOR_PALETTE, reverse=True))
     gdf["color_perc_hex"] = (gdf["percentage_change"] * (1 - factor)).apply(
@@ -195,13 +197,12 @@ if st.session_state.mode == "S3_S2":
                 "pitch": 0,
             },
             "mapStyle": {
-                # Use custom style instead of the built-in "dark"
                 "styleType": "carto_dark",
                 "mapStyles": [
                     {
                         "id": "carto_dark",
                         "label": "Carto Dark",
-                        "url": CARTO_DARK,  # style.json URL
+                        "url": CARTO_DARK,
                     }
                 ],
             },
@@ -211,61 +212,73 @@ if st.session_state.mode == "S3_S2":
                     "type": "geojson",
                     "config": {
                         "dataId": data_id,
+                        "label": data_id,
                         "columns": {"geojson": "geometry_json"},
                         "isVisible": True,
                         "visConfig": {
                             "opacity": opacity_val,
+                            "stroked": False,
                             "filled": True,
+                            "thickness": 0.5,
                             "colorRange": {"colors": COLOR_PALETTE},
+                            "strokeColorRange": {"colors": COLOR_PALETTE},
                         },
                     },
                     "visualChannels": {
                         "colorField": {"name": "Colour code", "type": "string"},
                         "colorScale": "ordinal",
-                    },
-                }],
+                    }
+                }]
             },
             "options": {
-                "centerMap": False,   # <- don't auto-fit to data bounds
-                "readOnly": False,    # or True if you don't want the user to pan/zoom
-            },
-        },
+                "centerMap": False,
+                "readOnly": False
+            }
+        }
     }
 
     col1, col2 = st.columns(2)
+
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=kepler_config("absolute_change"))
         keplergl_static(map_abs, height=380, width=560)
         make_color_legend(
             "Legend: Absolute change in the number of on-site workers",
-            COLOR_PALETTE[::-1], [f"≤ {v:.1f}" for v in thresholds_abs], reverse=False
+            COLOR_PALETTE[::-1],
+            [f"≤ {v:.1f}" for v in thresholds_abs]
         )
+
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=kepler_config("percentage_change"))
         keplergl_static(map_perc, height=380, width=560)
         make_color_legend(
             "Legend: Percentage change in the number of on-site workers (%)",
-            COLOR_PALETTE[::-1], [f"≤ {v*100:.1f}%" for v in thresholds_perc], reverse=False
+            COLOR_PALETTE[::-1],
+            [f"≤ {v*100:.1f}%" for v in thresholds_perc]
         )
 
 # ============================================================
-# --- PAGE 2: S2 vs S1 (mostly positive, highest = brightest) ---
+# --- PAGE 2: S2 vs S1 ---
 # ============================================================
 elif st.session_state.mode == "S2_S1":
-    st.markdown("<h3>Difference in the number of on-site workers at the selected percentage of the remote-working population VS at the remote-working population percentage in S2</h3>", unsafe_allow_html=True)
+    st.markdown(
+        "<h3>Difference in the number of on-site workers at the selected percentage of the remote-working population VS at the remote-working population percentage in S2</h3>",
+        unsafe_allow_html=True
+    )
 
     if st.button("Back to S3 vs S2"):
         st.session_state.mode = "S3_S2"
         st.rerun()
 
-    gdf = load_dataset("Datasets/Grid maps/s1_s2_on_site_workers_diff.gpkg")
+    gdf = load_dataset("Datasets/Workers changes/s1_s2_onsite_difference_rebounds.gpkg")
 
-    # Only percentage thresholds still use quantiles
-    quantiles_perc = [0.10, 0.25, 0.4, 0.6, 0.75, 0.9, 0.97]
+    if "percentage_change" in gdf.columns:
+        gdf["percentage_change"] = gdf["percentage_change"].astype(float)
+
     thresholds_abs = ABS_THRESHOLDS_S2S1
-    thresholds_perc = gdf["percentage_change"].quantile(quantiles_perc).tolist()
+    thresholds_perc = PERC_THRESHOLDS_S2S1
 
     col_slider, _, opacity_slider, _ = st.columns([0.35, 0.15, 0.35, 0.15])
     with col_slider:
@@ -280,7 +293,6 @@ elif st.session_state.mode == "S2_S1":
     gdf["Percentage change numeric"] = gdf["percentage_change"] * (1 - factor) * 100
     gdf["Percentage change formatted"] = gdf["Percentage change numeric"].map(lambda v: f"{v:.1f}%")
 
-    # Highest = brightest for S2 vs S1
     gdf["color_abs_hex"] = gdf["Absolute change in the number of on-site workers"].apply(
         lambda v: get_color(v, thresholds_abs, COLOR_PALETTE))
     gdf["color_perc_hex"] = (gdf["percentage_change"] * (1 - factor)).apply(
@@ -305,13 +317,12 @@ elif st.session_state.mode == "S2_S1":
                 "pitch": 0,
             },
             "mapStyle": {
-                # Use custom style instead of the built-in "dark"
                 "styleType": "carto_dark",
                 "mapStyles": [
                     {
                         "id": "carto_dark",
                         "label": "Carto Dark",
-                        "url": CARTO_DARK,  # style.json URL
+                        "url": CARTO_DARK,
                     }
                 ],
             },
@@ -321,41 +332,49 @@ elif st.session_state.mode == "S2_S1":
                     "type": "geojson",
                     "config": {
                         "dataId": data_id,
+                        "label": data_id,
                         "columns": {"geojson": "geometry_json"},
                         "isVisible": True,
                         "visConfig": {
                             "opacity": opacity_val,
+                            "stroked": False,
                             "filled": True,
+                            "thickness": 0.5,
                             "colorRange": {"colors": COLOR_PALETTE},
+                            "strokeColorRange": {"colors": COLOR_PALETTE},
                         },
                     },
                     "visualChannels": {
                         "colorField": {"name": "Colour code", "type": "string"},
                         "colorScale": "ordinal",
-                    },
-                }],
+                    }
+                }]
             },
             "options": {
-                "centerMap": False,   # <- don't auto-fit to data bounds
-                "readOnly": False,    # or True if you don't want the user to pan/zoom
-            },
-        },
+                "centerMap": False,
+                "readOnly": False
+            }
+        }
     }
 
     col1, col2 = st.columns(2)
+
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=kepler_config("absolute_change"))
         keplergl_static(map_abs, height=380, width=560)
         make_color_legend(
             "Legend: Absolute change in the number of on-site workers",
-            COLOR_PALETTE, [f"≤ {v:.1f}" for v in thresholds_abs]
+            COLOR_PALETTE,
+            [f"≤ {v:.1f}" for v in thresholds_abs]
         )
+
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=kepler_config("percentage_change"))
         keplergl_static(map_perc, height=380, width=560)
         make_color_legend(
             "Legend: Percentage change in the number of on-site workers (%)",
-            COLOR_PALETTE, [f"≤ {v*100:.1f}%" for v in thresholds_perc]
+            COLOR_PALETTE,
+            [f"≤ {v*100:.1f}%" for v in thresholds_perc]
         )
