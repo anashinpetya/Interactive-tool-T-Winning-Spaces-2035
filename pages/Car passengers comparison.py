@@ -128,12 +128,29 @@ def get_color(value, thresholds, palette, reverse=False, default="#888888"):
         return palette[-1]
 
 
-def load_dataset(path):
+# <<< CACHING ADDED HERE
+@st.cache_data(show_spinner="Loading dataset...")
+def load_dataset(path: str) -> gpd.GeoDataFrame:
+    """
+    Load a GeoPackage, reproject to WGS84 if needed, and
+    precompute geometry_json so we don't redo this every rerun.
+    This result is cached per 'path'.
+    """
     gdf = gpd.read_file(path)
+
     # Ensure WGS84 for kepler.gl
     if gdf.crs and gdf.crs.to_epsg() != 4326:
         gdf = gdf.to_crs(4326)
+
+    # Precompute geometry_json once (doesn't depend on slider/thresholds)
+    if "geometry_json" not in gdf.columns:
+        gdf = gdf.copy()
+        gdf["geometry_json"] = gdf["geometry"].apply(
+            lambda geom: json.dumps(geom.__geo_interface__)
+        )
+
     return gdf
+# <<< END CACHING
 
 
 # Color palette (7 steps)
@@ -219,7 +236,7 @@ if st.session_state.mode == "S3_S2":
         st.session_state.mode = "S2_S1"
         st.rerun()
 
-    # --- LINESTRING DATASETS ---
+    # --- LINESTRING DATASETS (CACHED) ---
     gdf = load_dataset("Datasets/Traffic changes/s2_s3_cars_difference_rebounds_abs_change.gpkg")
 
     # Ensure percentage_change is float
@@ -269,11 +286,7 @@ if st.session_state.mode == "S3_S2":
         lambda v: get_color(v, thresholds_perc, COLOR_PALETTE, reverse=True)
     )
 
-    # GeoJSON string per row
-    gdf_abs["geometry_json"] = gdf_abs["geometry"].apply(lambda geom: json.dumps(geom.__geo_interface__))
-    gdf_perc["geometry_json"] = gdf_perc["geometry"].apply(lambda geom: json.dumps(geom.__geo_interface__))
-
-    # Two views: absolute / percentage
+    # --- Use precomputed geometry_json from cached gdf ---
     df_abs = gdf_abs[["Absolute change in the number of car passengers", "geometry_json"]].copy()
     df_abs["Colour code"] = gdf_abs["color_abs_hex"]
 
@@ -288,7 +301,6 @@ if st.session_state.mode == "S3_S2":
 
     with col1:
         st.markdown("**Absolute Change**")
-        # Fixed pixel width via keplergl_static
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=cfg_abs)
         keplergl_static(map_abs, height=380, width=560)
         make_color_legend(
@@ -320,7 +332,7 @@ elif st.session_state.mode == "S2_S1":
         st.session_state.mode = "S3_S2"
         st.rerun()
 
-    # --- LINESTRING DATASETS ---
+    # --- LINESTRING DATASETS (CACHED) ---
     gdf = load_dataset("Datasets/Traffic changes/s1_s2_cars_difference_rebounds_abs_change.gpkg")
 
     # Ensure percentage_change is float
@@ -370,9 +382,7 @@ elif st.session_state.mode == "S2_S1":
         lambda v: get_color(v, thresholds_perc, COLOR_PALETTE)
     )
 
-    gdf_abs["geometry_json"] = gdf_abs["geometry"].apply(lambda geom: json.dumps(geom.__geo_interface__))
-    gdf_perc["geometry_json"] = gdf_perc["geometry"].apply(lambda geom: json.dumps(geom.__geo_interface__))
-
+    # Use precomputed geometry_json
     df_abs = gdf_abs[["Absolute change in the number of car passengers", "geometry_json"]].copy()
     df_abs["Colour code"] = gdf_abs["color_abs_hex"]
 
