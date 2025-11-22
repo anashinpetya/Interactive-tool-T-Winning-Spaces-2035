@@ -9,10 +9,32 @@ from navigation import load_sidebar
 
 CARTO_DARK = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
 
+
 # ============================================================
 # --- PAGE SETUP & STYLE ---
 # ============================================================
-st.set_page_config(layout="wide", page_title="Transit Passengers Comparison")
+st.set_page_config(layout="wide")
+#page_title="Transit passengers comparison"
+
+st.markdown("""
+<style>
+/* Hide text of default Streamlit sidebar menu */
+div[data-testid="stSidebarNav"] span,
+div[data-testid="stSidebarNav"] a {
+    color: transparent !important;      /* hides text */
+    visibility: hidden !important;      /* prevents hover showing text */
+}
+
+/* Optionally remove spacing to collapse it */
+div[data-testid="stSidebarNav"] ul {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+load_sidebar()
 
 st.markdown("""
 <style>
@@ -25,9 +47,7 @@ div[data-testid="stButton"] button {
 }
 div[data-testid="stButton"] button:hover { background-color: #ff7373 !important; }
 div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div { height: 2px !important; }
-div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] {
-    width: 12px !important; height: 12px !important;
-}
+div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] { width: 12px !important; height: 12px !important; }
 div[data-testid="stSlider"] div[data-testid="stTickBar"] > div:first-child > div,
 div[data-testid="stSlider"] div[data-testid="stTickBar"] > div:last-child > div {
     transform: translateX(-50%) !important; text-align: center !important; display: inline-block !important; width: auto !important;
@@ -35,13 +55,43 @@ div[data-testid="stSlider"] div[data-testid="stTickBar"] > div:last-child > div 
 </style>
 """, unsafe_allow_html=True)
 
-load_sidebar()
-
 # ============================================================
 # --- NAV STATE ---
 # ============================================================
 if "mode" not in st.session_state:
     st.session_state.mode = "S3_S2"  # default page
+
+# ============================================================
+# --- YOUR HARD-CODED THRESHOLDS (EDIT THESE) ---
+#   Exactly 7 strictly increasing numbers in each list.
+#   Percent thresholds are FRACTIONS (e.g. -0.5 = -50%, 0.2 = +20%).
+#   S3–S2 uses "lowest = brightest"; S2–S1 uses "highest = brightest".
+# ============================================================
+
+# Absolute change thresholds
+CUSTOM_THRESHOLDS_ABS_S3S2 = [-200, -50, -15, -7, -2, 0.1, 3]   # <-- EDIT
+CUSTOM_THRESHOLDS_ABS_S2S1 = [0, 3, 12, 27, 70, 150, 400]  # <-- EDIT
+
+# Percentage change thresholds (fractions, NOT %) 
+# S3 vs S2: mostly negative
+CUSTOM_THRESHOLDS_PERC_S3S2 = [-0.45, -0.35, -0.21, -0.1, -0.05,  0.1, 0.3]  # <-- EDIT
+
+# S2 vs S1: mostly positive
+CUSTOM_THRESHOLDS_PERC_S2S1 = [-0.4, 0, 0.25, 0.45, 0.6, 0.85, 1.2]      # <-- EDIT
+
+# Optional: safety check (raises helpful error if invalid)
+def _validate_thresholds(lst, name):
+    if not isinstance(lst, (list, tuple)) or len(lst) != 7:
+        raise ValueError(f"{name} must have exactly 7 numbers.")
+    if not all(isinstance(x, (int, float)) for x in lst):
+        raise ValueError(f"{name} must contain only numbers.")
+    if not all(lst[i] < lst[i+1] for i in range(6)):
+        raise ValueError(f"{name} must be strictly increasing.")
+
+_validate_thresholds(CUSTOM_THRESHOLDS_ABS_S3S2, "CUSTOM_THRESHOLDS_ABS_S3S2")
+_validate_thresholds(CUSTOM_THRESHOLDS_ABS_S2S1, "CUSTOM_THRESHOLDS_ABS_S2S1")
+_validate_thresholds(CUSTOM_THRESHOLDS_PERC_S3S2, "CUSTOM_THRESHOLDS_PERC_S3S2")
+_validate_thresholds(CUSTOM_THRESHOLDS_PERC_S2S1, "CUSTOM_THRESHOLDS_PERC_S2S1")
 
 # ============================================================
 # --- UTILITIES ---
@@ -51,7 +101,7 @@ def make_color_legend(title, colors, labels, reverse=False):
         colors = list(reversed(colors))
         labels = list(reversed(labels))
     html = f"""
-    <div style='margin-top:2px; line-height:16px;'>
+    <div style='margin-top:10px; line-height:16px;'>
         <b>{title}</b>
         <div style='margin-top:6px; display:flex; flex-wrap:wrap; row-gap:6px;'>
     """
@@ -64,45 +114,27 @@ def make_color_legend(title, colors, labels, reverse=False):
     html += "</div></div>"
     st.markdown(html, unsafe_allow_html=True)
 
-
 def get_color(value, thresholds, palette, reverse=False, default="#888888"):
     if pd.isna(value):
         return default
     if reverse:
         palette = list(reversed(palette))
-    if value <= thresholds[0]:
-        return palette[0]
-    elif value <= thresholds[1]:
-        return palette[1]
-    elif value <= thresholds[2]:
-        return palette[2]
-    elif value <= thresholds[3]:
-        return palette[3]
-    elif value <= thresholds[4]:
-        return palette[4]
-    elif value <= thresholds[5]:
-        return palette[5]
-    elif value <= thresholds[6]:
-        return palette[6]
-    else:
-        return palette[-1]
+    if value <= thresholds[0]: return palette[0]
+    elif value <= thresholds[1]: return palette[1]
+    elif value <= thresholds[2]: return palette[2]
+    elif value <= thresholds[3]: return palette[3]
+    elif value <= thresholds[4]: return palette[4]
+    elif value <= thresholds[5]: return palette[5]
+    elif value <= thresholds[6]: return palette[6]
+    else: return palette[-1]
 
-
-@st.cache_data(show_spinner="Loading dataset...")
 def load_dataset(path):
     gdf = gpd.read_file(path)
     if gdf.crs and gdf.crs.to_epsg() != 4326:
         gdf = gdf.to_crs(4326)
     return gdf
 
-
 COLOR_PALETTE = ["#3B0A45", "#78001E", "#B52F0D", "#D65E00", "#E98000", "#F3A300", "#FFD400"]
-
-ABS_THRESHOLDS_S3S2 = [-110.0, -80, -60.0, -40.0, -25.0, -10.0, -5.0]
-PERC_THRESHOLDS_S3S2 = [-0.55, -0.45, -0.35, -0.23, -0.10, -0.05, -0.01]
-
-ABS_THRESHOLDS_S2S1 = [10.0, 25.0, 50.0, 75.0, 100.0, 150.0, 200.0]
-PERC_THRESHOLDS_S2S1 = [0.2, 0.7, 1.4, 2.0, 3.0, 5.0, 7.0]
 
 def kepler_config_lines(data_id, palette):
     return {
@@ -118,7 +150,7 @@ def kepler_config_lines(data_id, palette):
             "mapStyle": {
                 "id": "carto_dark",
                 "label": "Carto Dark",
-                "url": CARTO_DARK,
+                "url": CARTO_DARK,  # style.json URL
             },
             "visState": {
                 "layers": [{
@@ -145,69 +177,69 @@ def kepler_config_lines(data_id, palette):
                 }]
             },
             "options": {
-                "centerMap": False,
-                "readOnly": False
+                "centerMap": False,   # ✅ prevents auto-scaling to data bounds
+                "readOnly": False     # set True if you want fixed, non-movable map
             }
         }
     }
 
-# PAGE 1: S3 vs S2
+
+# ============================================================
+# --- PAGE 1: S3 vs S2 (mostly negative, lowest = brightest) ---
+# ============================================================
 if st.session_state.mode == "S3_S2":
-    st.markdown(
-        "<h3>Difference in the number of transit passengers at the selected percentage of the remote-working population VS at the remote-working population percentage in S3</h3>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<h3>Difference in the number of transit passengers at the selected percentage of the remote-working population VS at the remote-working population percentage in S3</h3>", unsafe_allow_html=True)
 
     if st.button("S2 vs S1 comparison"):
         st.session_state.mode = "S2_S1"
         st.rerun()
 
-    gdf = load_dataset("Datasets/Transit changes/s2_s3_transit_difference_rebounds_abs_change.gpkg")
+    gdf = load_dataset("Datasets/Traffic changes/s2_s3_transit_difference_rebounds_abs_change.gpkg")
 
     if "percentage_change" in gdf.columns:
         gdf["percentage_change"] = gdf["percentage_change"].astype(float)
 
+    # --- Create 2 datasets and drop NaNs instead of fillna ---
     gdf_abs = gdf.dropna(subset=["absolute_change"]).copy()
     gdf_perc = gdf.dropna(subset=["percentage_change"]).copy()
 
-    thresholds_abs = ABS_THRESHOLDS_S3S2
-    thresholds_perc = PERC_THRESHOLDS_S3S2
+    # Use manual percentage thresholds for S3–S2
+    thresholds_perc = CUSTOM_THRESHOLDS_PERC_S3S2
 
     col_slider, _, _, _ = st.columns([0.35, 0.08, 0.07, 0.5])
     with col_slider:
-        st.markdown(
-            "<p style='font-weight:600; margin-bottom:6px;'>The percentage of remote working population</p>",
-            unsafe_allow_html=True
-        )
-        slider_val = st.slider(
-            "slider_s3s2",
-            24.0, 47.3, 47.3,
-            0.1,
-            format="%.1f",
-            label_visibility="collapsed"
-        )
+        st.markdown("<p style='font-weight:600; margin-bottom:6px;'>The percentage of remote working population</p>", unsafe_allow_html=True)
+        slider_val = st.slider("slider_s3s2", 24.0, 47.3, 47.3, 0.1, format="%.1f", label_visibility="collapsed")
 
     factor = (47.3 - slider_val) / (47.3 - 24.0)
 
+    # Derived fields (ABS dataset)
     gdf_abs["Absolute change in the number of transit passengers"] = (
         gdf_abs["absolute_change"] * (1 - factor)
     ).round(1)
 
+    # Derived fields (PERC dataset)
     gdf_perc["Percentage change numeric"] = gdf_perc["percentage_change"] * (1 - factor) * 100
     gdf_perc["Percentage change formatted"] = gdf_perc["Percentage change numeric"].map(
         lambda v: f"{v:.1f}%"
     )
 
+    # Color by absolute change using custom thresholds (lowest = brightest)
+    thresholds_abs = CUSTOM_THRESHOLDS_ABS_S3S2
     gdf_abs["color_abs_hex"] = gdf_abs["Absolute change in the number of transit passengers"].apply(
         lambda v: get_color(v, thresholds_abs, COLOR_PALETTE, reverse=True)
     )
+
+    # Color by percentage change using custom thresholds (lowest = brightest)
     gdf_perc["color_perc_hex"] = (gdf_perc["percentage_change"] * (1 - factor)).apply(
         lambda v: get_color(v, thresholds_perc, COLOR_PALETTE, reverse=True)
     )
 
+    # GeoJSON string per row
     gdf_abs["geometry_json"] = gdf_abs["geometry"].apply(lambda geom: json.dumps(geom.__geo_interface__))
     gdf_perc["geometry_json"] = gdf_perc["geometry"].apply(lambda geom: json.dumps(geom.__geo_interface__))
 
+    # Two views: absolute / percentage
     df_abs = gdf_abs[["Absolute change in the number of transit passengers", "geometry_json"]].copy()
     df_abs["Colour code"] = gdf_abs["color_abs_hex"]
 
@@ -218,77 +250,70 @@ if st.session_state.mode == "S3_S2":
     cfg_perc = kepler_config_lines("percentage_change", COLOR_PALETTE)
 
     col1, col2 = st.columns(2)
-
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=cfg_abs)
         keplergl_static(map_abs, height=380, width=560)
         make_color_legend(
             "Legend: Absolute change in the number of transit passengers",
-            COLOR_PALETTE[::-1],
-            [f"≤ {v:.1f}" for v in thresholds_abs]
+            COLOR_PALETTE[::-1], [f"≤ {v:.1f}" for v in thresholds_abs]
         )
-
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=cfg_perc)
         keplergl_static(map_perc, height=380, width=560)
         make_color_legend(
             "Legend: Percentage change in the number of transit passengers (%)",
-            COLOR_PALETTE[::-1],
-            [f"≤ {v*100:.1f}%" for v in thresholds_perc]
+            COLOR_PALETTE[::-1], [f"≤ {v*100:.1f}%" for v in thresholds_perc]
         )
 
-# PAGE 2: S2 vs S1
+# ============================================================
+# --- PAGE 2: S2 vs S1 (mostly positive, highest = brightest) ---
+# ============================================================
 elif st.session_state.mode == "S2_S1":
-    st.markdown(
-        "<h3>Difference in the number of transit passengers at the selected percentage of the remote-working population VS at the remote-working population percentage in S2</h3>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<h3>Difference in the number of transit passengers at the selected percentage of the remote-working population VS at the remote-working population percentage in S2</h3>", unsafe_allow_html=True)
 
     if st.button("Back to S3 vs S2"):
         st.session_state.mode = "S3_S2"
         st.rerun()
 
-    gdf = load_dataset("Datasets/Transit changes/s1_s2_transit_difference_rebounds_abs_change.gpkg")
+    gdf = load_dataset("Datasets/Traffic changes/s1_s2_transit_difference_rebounds_abs_change.gpkg")
 
     if "percentage_change" in gdf.columns:
         gdf["percentage_change"] = gdf["percentage_change"].astype(float)
 
+    # --- Create 2 datasets and drop NaNs instead of fillna ---
     gdf_abs = gdf.dropna(subset=["absolute_change"]).copy()
     gdf_perc = gdf.dropna(subset=["percentage_change"]).copy()
 
-    thresholds_abs = ABS_THRESHOLDS_S2S1
-    thresholds_perc = PERC_THRESHOLDS_S2S1
+    # Use manual percentage thresholds for S2–S1
+    thresholds_perc = CUSTOM_THRESHOLDS_PERC_S2S1
 
     col_slider, _, _, _ = st.columns([0.35, 0.08, 0.07, 0.5])
     with col_slider:
-        st.markdown(
-            "<p style='font-weight:600; margin-bottom:6px;'>The percentage of remote working population</p>",
-            unsafe_allow_html=True
-        )
-        slider_val = st.slider(
-            "slider_s2s1",
-            0.0, 24.0, 0.0,
-            0.1,
-            format="%.1f",
-            label_visibility="collapsed"
-        )
+        st.markdown("<p style='font-weight:600; margin-bottom:6px;'>The percentage of remote working population</p>", unsafe_allow_html=True)
+        slider_val = st.slider("slider_s2s1", 0.0, 24.0, 0.0, 0.1, format="%.1f", label_visibility="collapsed")
 
     factor = slider_val / 24.0
 
+    # Derived fields (ABS dataset)
     gdf_abs["Absolute change in the number of transit passengers"] = (
         gdf_abs["absolute_change"] * (1 - factor)
     ).round(1)
 
+    # Derived fields (PERC dataset)
     gdf_perc["Percentage change numeric"] = gdf_perc["percentage_change"] * (1 - factor) * 100
     gdf_perc["Percentage change formatted"] = gdf_perc["Percentage change numeric"].map(
         lambda v: f"{v:.1f}%"
     )
 
+    # Color by absolute change using custom thresholds (highest = brightest)
+    thresholds_abs = CUSTOM_THRESHOLDS_ABS_S2S1
     gdf_abs["color_abs_hex"] = gdf_abs["Absolute change in the number of transit passengers"].apply(
-        lambda v: get_color(v, thresholds_abs, COLOR_PALETTE)
+        lambda v: get_color(v, thresholds_abs, COLOR_PALETTE, reverse=False)
     )
+
+    # Color by percentage change using custom thresholds (highest = brightest)
     gdf_perc["color_perc_hex"] = (gdf_perc["percentage_change"] * (1 - factor)).apply(
         lambda v: get_color(v, thresholds_perc, COLOR_PALETTE)
     )
@@ -306,23 +331,19 @@ elif st.session_state.mode == "S2_S1":
     cfg_perc = kepler_config_lines("percentage_change", COLOR_PALETTE)
 
     col1, col2 = st.columns(2)
-
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=cfg_abs)
         keplergl_static(map_abs, height=380, width=560)
         make_color_legend(
             "Legend: Absolute change in the number of transit passengers",
-            COLOR_PALETTE,
-            [f"≤ {v:.1f}" for v in thresholds_abs]
+            COLOR_PALETTE, [f"≤ {v:.1f}" for v in thresholds_abs]
         )
-
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=cfg_perc)
         keplergl_static(map_perc, height=380, width=560)
         make_color_legend(
             "Legend: Percentage change in the number of transit passengers (%)",
-            COLOR_PALETTE,
-            [f"≤ {v*100:.1f}%" for v in thresholds_perc]
+            COLOR_PALETTE, [f"≤ {v*100:.1f}%" for v in thresholds_perc]
         )
