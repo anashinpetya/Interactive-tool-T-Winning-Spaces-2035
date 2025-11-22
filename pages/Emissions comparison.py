@@ -176,7 +176,7 @@ if st.session_state.mode == "S3_S2":
         st.session_state.mode = "S2_S1"
         st.rerun()
 
-    gdf = load_dataset("Datasets/Emissions changes/s2_s3_emissions_difference_rebounds.gpkg")
+    gdf = load_dataset("Datasets/Grid maps/s2_s3_emissions_diff.gpkg")
 
     if "percentage_change" in gdf.columns:
         gdf["percentage_change"] = gdf["percentage_change"].astype(float)
@@ -246,7 +246,7 @@ elif st.session_state.mode == "S2_S1":
         st.session_state.mode = "S3_S2"
         st.rerun()
 
-    gdf = load_dataset("Datasets/Emissions changes/s1_s2_emissions_difference_rebounds.gpkg")
+    gdf = load_dataset("Datasets/Grid maps/s1_s2_emissions_diff.gpkg")
 
     if "percentage_change" in gdf.columns:
         gdf["percentage_change"] = gdf["percentage_change"].astype(float)
