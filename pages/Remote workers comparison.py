@@ -124,11 +124,30 @@ def get_color(value, thresholds, palette, reverse=False):
         elif value <= thresholds[6]: return palette[6]
         else: return palette[-1]
 
-def load_dataset(path):
+
+# <<< CACHING ADDED HERE
+@st.cache_data(show_spinner="Loading dataset...")
+def load_dataset(path: str) -> gpd.GeoDataFrame:
+    """
+    Load a GeoPackage, reproject to WGS84 if needed, and
+    precompute geometry_json so we don't redo this every rerun.
+    This result is cached per 'path'.
+    """
     gdf = gpd.read_file(path)
+
+    # Ensure WGS84 for kepler.gl
     if gdf.crs and gdf.crs.to_epsg() != 4326:
         gdf = gdf.to_crs(4326)
+
+    # Precompute geometry_json once (doesn't depend on slider/thresholds)
+    if "geometry_json" not in gdf.columns:
+        gdf = gdf.copy()
+        gdf["geometry_json"] = gdf["geometry"].apply(
+            lambda geom: json.dumps(geom.__geo_interface__)
+        )
+
     return gdf
+# <<< END CACHING
 
 COLOR_PALETTE = ["#3B0A45", "#78001E", "#B52F0D", "#D65E00", "#E98000", "#F3A300", "#FFD400"]
 
