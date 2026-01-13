@@ -34,7 +34,7 @@ st.markdown("<div style='height:2px;'></div>", unsafe_allow_html=True)
 
 # --- Image Layout ---
 # Columns: [left margin, logo1, middle space, logo2, right margin]
-col_empty1, col_img1, col_empty2, col_img2, col_empty3 = st.columns(
+col_empty1, col_img1, col_empty2, col_img2, col_empty3, col_img3, col_empty4 = st.columns(
     [0.075, 0.25, 0.05, 0.25, 0.05, 0.25, 0.075]
 )
 
