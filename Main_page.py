@@ -19,14 +19,15 @@ load_sidebar()  # make sure load_sidebar() does NOT call st.set_page_config
 # =========================
 # Per-logo size controls
 # =========================
-# This is the cleanest way to control each logo separately:
-# - box_height_px: fixed row height; logos are vertically centered within it (same middle line)
-# - width_pct: max width as % of its column (each logo can differ)
-# - height_pct: max height as % of the fixed box height (each logo can differ)
+# IMPORTANT:
+# To have all logos centered on the same middle line,
+# they must share the SAME box_height_px.
+LOGO_BOX_HEIGHT_PX = 110  # <- one common height for the whole logo row
+
 LOGOS = [
-    {"path": "Tampere_uni_logo.png", "box_height_px": 100, "width_pct": 100, "height_pct": 100},
-    {"path": "logo1.png",            "box_height_px": 90, "width_pct": 90, "height_pct": 90},
-    {"path": "logo2.png",            "box_height_px": 100, "width_pct": 100, "height_pct": 100},
+    {"path": "Tampere_uni_logo.png", "width_pct": 100, "height_pct": 95},
+    {"path": "logo1.png",            "width_pct": 90,  "height_pct": 85},
+    {"path": "logo2.png",            "width_pct": 100, "height_pct": 95},
 ]
 
 # Space between the text and the logo row
@@ -111,6 +112,7 @@ st.markdown(
   align-items: center;       /* vertical centering -> same middle line */
   justify-content: center;   /* horizontal centering */
   width: 100%;
+  overflow: hidden;
 }}
 </style>
 
@@ -128,12 +130,21 @@ col_empty1, col_img1, col_empty2, col_img2, col_empty3, col_img3, col_empty4 = s
 # --- Render each logo with its own percentages ---
 with col_img1:
     L = LOGOS[0]
-    st.markdown(logo_html(L["path"], L["box_height_px"], L["width_pct"], L["height_pct"]), unsafe_allow_html=True)
+    st.markdown(
+        logo_html(L["path"], LOGO_BOX_HEIGHT_PX, L["width_pct"], L["height_pct"]),
+        unsafe_allow_html=True
+    )
 
 with col_img2:
     L = LOGOS[1]
-    st.markdown(logo_html(L["path"], L["box_height_px"], L["width_pct"], L["height_pct"]), unsafe_allow_html=True)
+    st.markdown(
+        logo_html(L["path"], LOGO_BOX_HEIGHT_PX, L["width_pct"], L["height_pct"]),
+        unsafe_allow_html=True
+    )
 
 with col_img3:
     L = LOGOS[2]
-    st.markdown(logo_html(L["path"], L["box_height_px"], L["width_pct"], L["height_pct"]), unsafe_allow_html=True)
+    st.markdown(
+        logo_html(L["path"], LOGO_BOX_HEIGHT_PX, L["width_pct"], L["height_pct"]),
+        unsafe_allow_html=True
+    )
