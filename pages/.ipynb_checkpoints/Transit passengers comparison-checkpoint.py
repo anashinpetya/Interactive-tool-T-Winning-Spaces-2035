@@ -7,6 +7,9 @@ from keplergl import KeplerGl
 from streamlit_keplergl import keplergl_static
 from navigation import load_sidebar
 
+CARTO_DARK = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+
+
 # ============================================================
 # --- PAGE SETUP & STYLE ---
 # ============================================================
@@ -125,11 +128,30 @@ def get_color(value, thresholds, palette, reverse=False, default="#888888"):
     elif value <= thresholds[6]: return palette[6]
     else: return palette[-1]
 
-def load_dataset(path):
+
+# <<< CACHING ADDED HERE
+@st.cache_data(show_spinner="Loading dataset...")
+def load_dataset(path: str) -> gpd.GeoDataFrame:
+    """
+    Load a GeoPackage, reproject to WGS84 if needed, and
+    precompute geometry_json so we don't redo this every rerun.
+    This result is cached per 'path'.
+    """
     gdf = gpd.read_file(path)
+
+    # Ensure WGS84 for kepler.gl
     if gdf.crs and gdf.crs.to_epsg() != 4326:
         gdf = gdf.to_crs(4326)
+
+    # Precompute geometry_json once (doesn't depend on slider/thresholds)
+    if "geometry_json" not in gdf.columns:
+        gdf = gdf.copy()
+        gdf["geometry_json"] = gdf["geometry"].apply(
+            lambda geom: json.dumps(geom.__geo_interface__)
+        )
+
     return gdf
+# <<< END CACHING
 
 COLOR_PALETTE = ["#3B0A45", "#78001E", "#B52F0D", "#D65E00", "#E98000", "#F3A300", "#FFD400"]
 
@@ -137,8 +159,18 @@ def kepler_config_lines(data_id, palette):
     return {
         "version": "v1",
         "config": {
-            "mapState": {"latitude": 60.26, "longitude": 24.93, "zoom": 8.7},
-            "mapStyle": {"styleType": "dark"},
+            "mapState": {
+                "latitude": 60.259889999999984,
+                "longitude": 25.2,
+                "zoom": 8.6,
+                "bearing": 0,
+                "pitch": 0
+            },
+            "mapStyle": {
+                "id": "carto_dark",
+                "label": "Carto Dark",
+                "url": CARTO_DARK,  # style.json URL
+            },
             "visState": {
                 "layers": [{
                     "id": f"{data_id}_layer",
@@ -152,7 +184,7 @@ def kepler_config_lines(data_id, palette):
                             "opacity": 0.9,
                             "stroked": True,
                             "filled": False,
-                            "thickness": 0.5,
+                            "thickness": 0.3,
                             "colorRange": {"colors": palette},
                             "strokeColorRange": {"colors": palette},
                         },
@@ -162,9 +194,14 @@ def kepler_config_lines(data_id, palette):
                         "strokeColorScale": "ordinal",
                     }
                 }]
+            },
+            "options": {
+                "centerMap": False,   # ✅ prevents auto-scaling to data bounds
+                "readOnly": False     # set True if you want fixed, non-movable map
             }
         }
     }
+
 
 # ============================================================
 # --- PAGE 1: S3 vs S2 (mostly negative, lowest = brightest) ---
@@ -235,7 +272,7 @@ if st.session_state.mode == "S3_S2":
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=cfg_abs)
-        keplergl_static(map_abs)
+        keplergl_static(map_abs, height=380, width=560)
         make_color_legend(
             "Legend: Absolute change in the number of transit passengers",
             COLOR_PALETTE[::-1], [f"≤ {v:.1f}" for v in thresholds_abs]
@@ -243,7 +280,7 @@ if st.session_state.mode == "S3_S2":
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=cfg_perc)
-        keplergl_static(map_perc)
+        keplergl_static(map_perc, height=380, width=560)
         make_color_legend(
             "Legend: Percentage change in the number of transit passengers (%)",
             COLOR_PALETTE[::-1], [f"≤ {v*100:.1f}%" for v in thresholds_perc]
@@ -316,7 +353,7 @@ elif st.session_state.mode == "S2_S1":
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=cfg_abs)
-        keplergl_static(map_abs)
+        keplergl_static(map_abs, height=380, width=560)
         make_color_legend(
             "Legend: Absolute change in the number of transit passengers",
             COLOR_PALETTE, [f"≤ {v:.1f}" for v in thresholds_abs]
@@ -324,7 +361,7 @@ elif st.session_state.mode == "S2_S1":
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=cfg_perc)
-        keplergl_static(map_perc)
+        keplergl_static(map_perc, height=380, width=560)
         make_color_legend(
             "Legend: Percentage change in the number of transit passengers (%)",
             COLOR_PALETTE, [f"≤ {v*100:.1f}%" for v in thresholds_perc]

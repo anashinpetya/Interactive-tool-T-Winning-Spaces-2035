@@ -7,20 +7,20 @@ from keplergl import KeplerGl
 from streamlit_keplergl import keplergl_static
 from navigation import load_sidebar
 
+CARTO_DARK = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
 
 # ============================================================
 # --- PAGE SETUP & STYLE ---
 # ============================================================
 st.set_page_config(layout="wide")
-                   #page_title="Car passengers comparison"
 
 st.markdown("""
 <style>
 /* Hide text of default Streamlit sidebar menu */
 div[data-testid="stSidebarNav"] span,
 div[data-testid="stSidebarNav"] a {
-    color: transparent !important;      /* hides text */
-    visibility: hidden !important;      /* prevents hover showing text */
+    color: transparent !important;
+    visibility: hidden !important;
 }
 
 /* Optionally remove spacing to collapse it */
@@ -29,14 +29,10 @@ div[data-testid="stSidebarNav"] ul {
     padding: 0 !important;
 }
 
-</style>
-""", unsafe_allow_html=True)
-
-load_sidebar()
-    
-st.markdown("""
-<style>
-.block-container {padding-top: 3rem !important;}
+/* Just control top padding of main container, no max-width */
+.block-container {
+    padding-top: 3rem !important;
+}
 
 /* --- Button Styling --- */
 div[data-testid="stButton"] button {
@@ -53,6 +49,7 @@ div[data-testid="stButton"] button {
     display: block !important;
     margin: 0 auto !important;
 }
+
 div[data-testid="stButton"] button:hover {
     background-color: #ff7373 !important;
 }
@@ -61,6 +58,7 @@ div[data-testid="stButton"] button:hover {
 div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div {
     height: 2px !important;
 }
+
 div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] {
     width: 12px !important;
     height: 12px !important;
@@ -77,6 +75,8 @@ div[data-testid="stSlider"] div[data-testid="stTickBar"] > div:last-child > div 
 </style>
 """, unsafe_allow_html=True)
 
+load_sidebar()
+
 # ============================================================
 # --- NAV STATE ---
 # ============================================================
@@ -91,7 +91,7 @@ def make_color_legend(title, colors, labels, reverse=False):
         colors = list(reversed(colors))
         labels = list(reversed(labels))
     html = f"""
-    <div style='margin-top:10px; line-height:16px;'>
+    <div style='margin-top:2px; line-height:16px;'>
         <b>{title}</b>
         <div style='margin-top:6px; display:flex; flex-wrap:wrap; row-gap:6px;'>
     """
@@ -104,35 +104,63 @@ def make_color_legend(title, colors, labels, reverse=False):
     html += "</div></div>"
     st.markdown(html, unsafe_allow_html=True)
 
+
 def get_color(value, thresholds, palette, reverse=False, default="#888888"):
     if pd.isna(value):
         return default
     if reverse:
         palette = list(reversed(palette))
-    if value <= thresholds[0]: return palette[0]
-    elif value <= thresholds[1]: return palette[1]
-    elif value <= thresholds[2]: return palette[2]
-    elif value <= thresholds[3]: return palette[3]
-    elif value <= thresholds[4]: return palette[4]
-    elif value <= thresholds[5]: return palette[5]
-    elif value <= thresholds[6]: return palette[6]
-    else: return palette[-1]
+    if value <= thresholds[0]:
+        return palette[0]
+    elif value <= thresholds[1]:
+        return palette[1]
+    elif value <= thresholds[2]:
+        return palette[2]
+    elif value <= thresholds[3]:
+        return palette[3]
+    elif value <= thresholds[4]:
+        return palette[4]
+    elif value <= thresholds[5]:
+        return palette[5]
+    elif value <= thresholds[6]:
+        return palette[6]
+    else:
+        return palette[-1]
 
-def load_dataset(path):
+
+# <<< CACHING ADDED HERE
+@st.cache_data(show_spinner="Loading dataset...")
+def load_dataset(path: str) -> gpd.GeoDataFrame:
+    """
+    Load a GeoPackage, reproject to WGS84 if needed, and
+    precompute geometry_json so we don't redo this every rerun.
+    This result is cached per 'path'.
+    """
     gdf = gpd.read_file(path)
+
     # Ensure WGS84 for kepler.gl
     if gdf.crs and gdf.crs.to_epsg() != 4326:
         gdf = gdf.to_crs(4326)
+
+    # Precompute geometry_json once (doesn't depend on slider/thresholds)
+    if "geometry_json" not in gdf.columns:
+        gdf = gdf.copy()
+        gdf["geometry_json"] = gdf["geometry"].apply(
+            lambda geom: json.dumps(geom.__geo_interface__)
+        )
+
     return gdf
+# <<< END CACHING
+
 
 # Color palette (7 steps)
 COLOR_PALETTE = ["#3B0A45", "#78001E", "#B52F0D", "#D65E00", "#E98000", "#F3A300", "#FFD400"]
 
 # ============================================================
 # --- MANUAL THRESHOLDS (EDIT THESE VALUES) ---
-#   * thresholds must be sorted from lowest to highest
-#   * percentage thresholds are in FRACTIONS, not percent
-#     (e.g. -0.5 = -50%, 0.3 = +30%)
+# * thresholds must be sorted from lowest to highest
+# * percentage thresholds are in FRACTIONS, not percent
+#   (e.g. -0.5 = -50%, 0.3 = +30%)
 # ============================================================
 
 # S3 vs S2 (mostly negative, lowest = brightest)
@@ -145,15 +173,25 @@ PERC_THRESHOLDS_S2S1 = [0.2, 0.7, 1.4, 2.0, 3.0, 5.0, 7.0]
 
 # ============================================================
 # --- KEPLER CONFIG FOR LINESTRINGS ---
-#   * Treat lines like "polygons" color-wise by using stroke colors
-#   * thickness fixed at 0.5 as you requested
+# * Treat lines like "polygons" color-wise by using stroke colors
+# * thickness fixed at 0.5
 # ============================================================
 def kepler_config_lines(data_id, palette):
     return {
         "version": "v1",
         "config": {
-            "mapState": {"latitude": 60.26, "longitude": 24.91, "zoom": 8.6},
-            "mapStyle": {"styleType": "dark"},
+            "mapState": {
+                "latitude": 60.259889999999984,
+                "longitude": 25.2,
+                "zoom": 8.6,
+                "bearing": 0,
+                "pitch": 0
+            },
+            "mapStyle": {
+                "id": "carto_dark",
+                "label": "Carto Dark",
+                "url": CARTO_DARK,  # style.json URL
+            },
             "visState": {
                 "layers": [{
                     "id": f"{data_id}_layer",
@@ -165,20 +203,22 @@ def kepler_config_lines(data_id, palette):
                         "isVisible": True,
                         "visConfig": {
                             "opacity": 0.9,
-                            "stroked": True,     # important for LineStrings
-                            "filled": False,     # polygons only; keep False for lines
-                            "thickness": 0.5,    # requested line width
-                            "colorRange": {"colors": palette},          # used by colorField (fill)
-                            "strokeColorRange": {"colors": palette},    # used by strokeColorField
+                            "stroked": True,
+                            "filled": False,
+                            "thickness": 0.3,
+                            "colorRange": {"colors": palette},
+                            "strokeColorRange": {"colors": palette},
                         },
                     },
                     "visualChannels": {
-                        # For lines we color via STROKE color channels:
                         "strokeColorField": {"name": "Colour code", "type": "string"},
                         "strokeColorScale": "ordinal",
-                        # Leave fill color channels unused for lines
                     }
                 }]
+            },
+            "options": {
+                "centerMap": False,
+                "readOnly": False
             }
         }
     }
@@ -187,13 +227,16 @@ def kepler_config_lines(data_id, palette):
 # --- PAGE 1: S3 vs S2 (mostly negative, lowest = brightest) ---
 # ============================================================
 if st.session_state.mode == "S3_S2":
-    st.markdown("<h3>Difference in the number of car passengers at the selected percentage of the remote-working population VS at the remote-working population percentage in S3</h3>", unsafe_allow_html=True)
+    st.markdown(
+        "<h3>Difference in the number of car passengers at the selected percentage of the remote-working population VS at the remote-working population percentage in S3</h3>",
+        unsafe_allow_html=True
+    )
 
     if st.button("S2 vs S1 comparison"):
         st.session_state.mode = "S2_S1"
         st.rerun()
 
-    # --- LINESTRING DATASETS ---
+    # --- LINESTRING DATASETS (CACHED) ---
     gdf = load_dataset("Datasets/Traffic changes/s2_s3_cars_difference_rebounds_abs_change.gpkg")
 
     # Ensure percentage_change is float
@@ -210,8 +253,17 @@ if st.session_state.mode == "S3_S2":
 
     col_slider, _, _, _ = st.columns([0.35, 0.08, 0.07, 0.5])
     with col_slider:
-        st.markdown("<p style='font-weight:600; margin-bottom:6px;'>The percentage of remote working population</p>", unsafe_allow_html=True)
-        slider_val = st.slider("slider_s3s2", 24.0, 47.3, 47.3, 0.1, format="%.1f", label_visibility="collapsed")
+        st.markdown(
+            "<p style='font-weight:600; margin-bottom:6px;'>The percentage of remote working population</p>",
+            unsafe_allow_html=True
+        )
+        slider_val = st.slider(
+            "slider_s3s2",
+            24.0, 47.3, 47.3,
+            0.1,
+            format="%.1f",
+            label_visibility="collapsed"
+        )
 
     factor = (47.3 - slider_val) / (47.3 - 24.0)
 
@@ -234,11 +286,7 @@ if st.session_state.mode == "S3_S2":
         lambda v: get_color(v, thresholds_perc, COLOR_PALETTE, reverse=True)
     )
 
-    # GeoJSON string per row
-    gdf_abs["geometry_json"] = gdf_abs["geometry"].apply(lambda geom: json.dumps(geom.__geo_interface__))
-    gdf_perc["geometry_json"] = gdf_perc["geometry"].apply(lambda geom: json.dumps(geom.__geo_interface__))
-
-    # Two views: absolute / percentage
+    # --- Use precomputed geometry_json from cached gdf ---
     df_abs = gdf_abs[["Absolute change in the number of car passengers", "geometry_json"]].copy()
     df_abs["Colour code"] = gdf_abs["color_abs_hex"]
 
@@ -250,34 +298,41 @@ if st.session_state.mode == "S3_S2":
     cfg_perc = kepler_config_lines("percentage_change", COLOR_PALETTE)
 
     col1, col2 = st.columns(2)
+
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=cfg_abs)
-        keplergl_static(map_abs)
+        keplergl_static(map_abs, height=380, width=560)
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
-            COLOR_PALETTE[::-1], [f"≤ {v:.1f}" for v in thresholds_abs]
+            COLOR_PALETTE[::-1],
+            [f"≤ {v:.1f}" for v in thresholds_abs]
         )
+
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=cfg_perc)
-        keplergl_static(map_perc)
+        keplergl_static(map_perc, height=380, width=560)
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
-            COLOR_PALETTE[::-1], [f"≤ {v*100:.1f}%" for v in thresholds_perc]
+            COLOR_PALETTE[::-1],
+            [f"≤ {v*100:.1f}%" for v in thresholds_perc]
         )
 
 # ============================================================
 # --- PAGE 2: S2 vs S1 (mostly positive, highest = brightest) ---
 # ============================================================
 elif st.session_state.mode == "S2_S1":
-    st.markdown("<h3>Difference in the number of car passengers at the selected percentage of the remote-working population VS at the remote-working population percentage in S2</h3>", unsafe_allow_html=True)
+    st.markdown(
+        "<h3>Difference in the number of car passengers at the selected percentage of the remote-working population VS at the remote-working population percentage in S2</h3>",
+        unsafe_allow_html=True
+    )
 
     if st.button("Back to S3 vs S2"):
         st.session_state.mode = "S3_S2"
         st.rerun()
 
-    # --- LINESTRING DATASETS ---
+    # --- LINESTRING DATASETS (CACHED) ---
     gdf = load_dataset("Datasets/Traffic changes/s1_s2_cars_difference_rebounds_abs_change.gpkg")
 
     # Ensure percentage_change is float
@@ -294,8 +349,17 @@ elif st.session_state.mode == "S2_S1":
 
     col_slider, _, _, _ = st.columns([0.35, 0.08, 0.07, 0.5])
     with col_slider:
-        st.markdown("<p style='font-weight:600; margin-bottom:6px;'>The percentage of remote working population</p>", unsafe_allow_html=True)
-        slider_val = st.slider("slider_s2s1", 0.0, 24.0, 0.0, 0.1, format="%.1f", label_visibility="collapsed")
+        st.markdown(
+            "<p style='font-weight:600; margin-bottom:6px;'>The percentage of remote working population</p>",
+            unsafe_allow_html=True
+        )
+        slider_val = st.slider(
+            "slider_s2s1",
+            0.0, 24.0, 0.0,
+            0.1,
+            format="%.1f",
+            label_visibility="collapsed"
+        )
 
     factor = slider_val / 24.0
 
@@ -318,9 +382,7 @@ elif st.session_state.mode == "S2_S1":
         lambda v: get_color(v, thresholds_perc, COLOR_PALETTE)
     )
 
-    gdf_abs["geometry_json"] = gdf_abs["geometry"].apply(lambda geom: json.dumps(geom.__geo_interface__))
-    gdf_perc["geometry_json"] = gdf_perc["geometry"].apply(lambda geom: json.dumps(geom.__geo_interface__))
-
+    # Use precomputed geometry_json
     df_abs = gdf_abs[["Absolute change in the number of car passengers", "geometry_json"]].copy()
     df_abs["Colour code"] = gdf_abs["color_abs_hex"]
 
@@ -331,19 +393,23 @@ elif st.session_state.mode == "S2_S1":
     cfg_perc = kepler_config_lines("percentage_change", COLOR_PALETTE)
 
     col1, col2 = st.columns(2)
+
     with col1:
         st.markdown("**Absolute Change**")
         map_abs = KeplerGl(height=380, data={"absolute_change": df_abs}, config=cfg_abs)
-        keplergl_static(map_abs)
+        keplergl_static(map_abs, height=380, width=560)
         make_color_legend(
             "Legend: Absolute change in the number of car passengers",
-            COLOR_PALETTE, [f"≤ {v:.1f}" for v in thresholds_abs]
+            COLOR_PALETTE,
+            [f"≤ {v:.1f}" for v in thresholds_abs]
         )
+
     with col2:
         st.markdown("**Percentage Change**")
         map_perc = KeplerGl(height=380, data={"percentage_change": df_perc}, config=cfg_perc)
-        keplergl_static(map_perc)
+        keplergl_static(map_perc, height=380, width=560)
         make_color_legend(
             "Legend: Percentage change in the number of car passengers (%)",
-            COLOR_PALETTE, [f"≤ {v*100:.1f}%" for v in thresholds_perc]
+            COLOR_PALETTE,
+            [f"≤ {v*100:.1f}%" for v in thresholds_perc]
         )

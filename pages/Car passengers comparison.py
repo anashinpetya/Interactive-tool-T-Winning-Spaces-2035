@@ -205,7 +205,7 @@ def kepler_config_lines(data_id, palette):
                             "opacity": 0.9,
                             "stroked": True,
                             "filled": False,
-                            "thickness": 0.5,
+                            "thickness": 0.3,
                             "colorRange": {"colors": palette},
                             "strokeColorRange": {"colors": palette},
                         },
