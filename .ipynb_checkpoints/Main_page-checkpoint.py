@@ -31,7 +31,7 @@ LOGOS = [
 ]
 
 # Space between the text and the logo row
-LOGO_ROW_TOP_PADDING_PX = 10
+LOGO_ROW_TOP_PADDING_PX = 3
 
 
 def img_to_data_uri(path: str) -> str:
