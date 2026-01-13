@@ -24,7 +24,7 @@ load_sidebar()  # make sure load_sidebar() does NOT call st.set_page_config
 # - width_pct: max width as % of its column (each logo can differ)
 # - height_pct: max height as % of the fixed box height (each logo can differ)
 LOGOS = [
-    {"path": "Tampere_uni_logo.png", "box_height_px": 90, "width_pct": 85, "height_pct": 85},
+    {"path": "Tampere_uni_logo.png", "box_height_px": 110, "width_pct": 105, "height_pct": 105},
     {"path": "logo1.png",            "box_height_px": 90, "width_pct": 95, "height_pct": 85},
     {"path": "logo2.png",            "box_height_px": 90, "width_pct": 75, "height_pct": 85},
 ]
