@@ -122,7 +122,7 @@ st.markdown(
 # --- Image Layout ---
 # Columns: [left margin, logo1, middle space, logo2, middle space, logo3, right margin]
 col_empty1, col_img1, col_empty2, col_img2, col_empty3, col_img3, col_empty4 = st.columns(
-    [0.075, 0.25, 0.07, 0.25, 0.03, 0.25, 0.075]
+    [0.02, 0.3, 0.04, 0.3, 0.02, 0.3, 0.02]
 )
 
 # --- Render each logo with its own percentages ---
