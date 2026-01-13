@@ -35,16 +35,22 @@ st.markdown("<div style='height:2px;'></div>", unsafe_allow_html=True)
 # --- Image Layout ---
 # Columns: [left margin, logo1, middle space, logo2, right margin]
 col_empty1, col_img1, col_empty2, col_img2, col_empty3 = st.columns(
-    [0.175, 0.35, 0.05, 0.25, 0.175]
+    [0.075, 0.25, 0.05, 0.25, 0.05, 0.25, 0.075]
 )
 
 with col_img1:
     # small padding above first logo
     st.markdown("<div style='padding-top:19px;'>", unsafe_allow_html=True)
-    st.image("logo1.png", width='stretch')
+    st.image("Tampere_uni_logo.png", width='stretch')
     st.markdown("</div>", unsafe_allow_html=True)
 
 with col_img2:
+    # small padding above first logo
+    st.markdown("<div style='padding-top:19px;'>", unsafe_allow_html=True)
+    st.image("logo1.png", width='stretch')
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with col_img3:
     # adjust padding-top here if you want this logo lower/higher
     #st.markdown("<div style='padding-bottom:10px;'>", unsafe_allow_html=True)
     st.image("logo2.png", width='stretch')
