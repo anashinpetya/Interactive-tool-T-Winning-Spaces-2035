@@ -24,7 +24,7 @@ The tool allows comparing emissions, travel patterns, and health impacts relativ
 The **T-Winning Spaces 2035** project aims to point towards winning spatial solutions for future work, enabling the double twin transition of digital/green and virtual/physical transforming our societies by 2035. Within this remit, this tool allows interactive visualization of the results from Work Package 3, whose goal was to understand the health impacts associated with digital work futures, and quantify the possible changes to GHG emissions.  
 More information: https://t-winning-spaces2035.com/
 
-The tool was developed by members of **the Urban Physics Research Group at Tampere University: Petr Anashin, Alonso Espinosa Mireles de Villafranca**, and the group head, **Jonathon Taylor**.
+The tool was developed by members of the Urban Physics Research Group at Tampere University: **Petr Anashin, Alonso Espinosa Mireles de Villafranca**, and the group head, **Jonathon Taylor**.
 
 *T-Winning Spaces 2035 is a project funded by the Research Council of Finland and has received funding from the European Union NextGenerationEU programme.*
 """)
